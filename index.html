@@ -1,0 +1,3873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魏凯 | Earth Online SSS玩家终端</title>
+<style>
+/* ========== 全局重置与基础变量 ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --color-primary: #60a5fa;
+    --color-primary-glow: rgba(96, 165, 250, 0.4);
+    --color-primary-soft: rgba(96, 165, 250, 0.12);
+    --color-text-main: #e5e7eb;
+    --color-text-sub: #9ca3af;
+    --color-text-muted: #6b7280;
+    --color-glass-bg: rgba(15, 23, 42, 0.5);
+    --color-glass-border: rgba(148, 163, 184, 0.15);
+    --color-glass-border-hover: rgba(96, 165, 250, 0.3);
+    --color-bg-deep: #050816;
+    --color-success: #34d399;
+    --color-danger: #f87171;
+    --color-warning: #fbbf24;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-serif: "Georgia", "Times New Roman", "Songti SC", "SimSun", serif;
+    --font-mono: "SF Mono", "Fira Code", "Consolas", "Monaco", monospace;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --blur-glass: 18px;
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --shadow-glow: 0 0 24px rgba(96, 165, 250, 0.12);
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html, body {
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    font-family: var(--font-sans);
+    color: var(--color-text-main);
+    background: var(--color-bg-deep);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    position: relative;
+    user-select: none;
+}
+
+/* ========== Canvas背景层 ========== */
+#bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ========== 顶部状态栏 ========== */
+.status-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 100;
+    background: rgba(5, 8, 22, 0.7);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 0.5px solid var(--color-glass-border);
+}
+
+.status-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.mac-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.mac-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+.mac-dot:hover { opacity: 0.8; }
+.mac-dot.red { background: #ff5f57; }
+.mac-dot.yellow { background: #febc2e; }
+.mac-dot.green { background: #28c840; }
+
+.status-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.status-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-text-main);
+    letter-spacing: 2px;
+    font-family: var(--font-sans);
+}
+
+.status-subtitle {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 2px;
+    font-family: var(--font-mono);
+}
+
+.status-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-sub);
+    letter-spacing: 1px;
+}
+
+.status-online-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 8px var(--color-primary-glow);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.status-signal {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+    margin-left: 4px;
+}
+
+.status-signal span {
+    width: 3px;
+    background: var(--color-text-sub);
+    border-radius: 1px;
+}
+
+.status-signal span:nth-child(1) { height: 3px; }
+.status-signal span:nth-child(2) { height: 6px; }
+.status-signal span:nth-child(3) { height: 9px; }
+.status-signal span:nth-child(4) { height: 12px; background: var(--color-primary); }
+
+/* ========== 主容器 ========== */
+.main-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    min-height: 100vh;
+    padding: 52px 40px 110px;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.grid-wrapper {
+    width: 100%;
+    max-width: 1320px;
+    min-height: calc(100vh - 162px);
+    display: grid;
+    grid-template-columns: 42% 58%;
+    gap: 28px;
+    align-items: stretch;
+}
+
+/* ========== 左栏 - 肖像区 ========== */
+.hero-left {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+}
+
+.portrait-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: #0a0f1f;
+    border: 0.5px solid var(--color-glass-border);
+    box-shadow: var(--shadow-soft);
+}
+
+.portrait-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    z-index: 1;
+}
+
+.portrait-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    background:
+        linear-gradient(180deg, rgba(5, 8, 22, 0.55) 0%, rgba(5, 8, 22, 0.15) 25%, rgba(5, 8, 22, 0.15) 55%, rgba(5, 8, 22, 0.9) 100%),
+        linear-gradient(90deg, rgba(5, 8, 22, 0.5) 0%, transparent 40%);
+    pointer-events: none;
+}
+
+.portrait-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* 左上方数据流 */
+.data-streams {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    z-index: 4;
+    font-family: var(--font-mono);
+}
+
+.data-stream-title {
+    font-size: 9px;
+    color: var(--color-text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    opacity: 0.8;
+}
+
+.data-stream-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-width: 110px;
+    margin-bottom: 6px;
+}
+
+.data-stream-label {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+}
+
+.data-stream-value {
+    font-size: 11px;
+    color: var(--color-primary);
+    font-weight: 500;
+    text-shadow: 0 0 8px var(--color-primary-glow);
+}
+
+/* 左下方WEI KAI大字 */
+.portrait-caption {
+    position: absolute;
+    bottom: 80px;
+    left: 24px;
+    right: 24px;
+    z-index: 4;
+}
+
+.portrait-name {
+    font-family: var(--font-serif);
+    font-size: 42px;
+    font-weight: 400;
+    color: #f0f0f0;
+    letter-spacing: 8px;
+    margin-bottom: 10px;
+    line-height: 1;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+}
+
+.portrait-tags {
+    font-size: 9px;
+    color: var(--color-text-sub);
+    letter-spacing: 1.5px;
+    font-family: var(--font-mono);
+    line-height: 1.8;
+    opacity: 0.8;
+}
+
+.portrait-tags span {
+    display: inline;
+}
+
+/* MARKET概览 */
+.market-chart {
+    position: absolute;
+    bottom: 160px;
+    left: 24px;
+    right: 24px;
+    z-index: 4;
+}
+
+.chart-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--color-text-muted);
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    opacity: 0.7;
+}
+
+.chart-canvas {
+    width: 100%;
+    height: 44px;
+}
+
+/* 底部标语 */
+.portrait-quote {
+    position: absolute;
+    bottom: 28px;
+    left: 24px;
+    right: 24px;
+    z-index: 4;
+    font-size: 12px;
+    color: var(--color-text-sub);
+    line-height: 1.8;
+    font-family: var(--font-sans);
+    opacity: 0.9;
+}
+
+/* ========== 右栏 - 价值叙事区 ========== */
+.hero-right {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0 20px 8px;
+    justify-content: space-between;
+    height: 100%;
+}
+
+/* 顶部标题栏 */
+.hero-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.hero-section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 1.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hero-section-label::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 8px var(--color-primary);
+}
+
+.hero-top-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 1px;
+}
+
+.hero-time {
+    color: var(--color-text-sub);
+}
+
+.hero-settings {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity var(--transition-fast);
+}
+
+.hero-settings:hover {
+    opacity: 1;
+}
+
+.hero-settings svg {
+    width: 14px;
+    height: 14px;
+    stroke: var(--color-text-sub);
+    fill: none;
+    stroke-width: 1.5;
+}
+
+/* 标题区域 */
+.hero-title-section {
+    margin-bottom: 14px;
+}
+
+.hero-main-title {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #f0f0f0 0%, #93c5fd 55%, #f0f0f0 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer-title 5s ease-in-out infinite;
+}
+
+@keyframes shimmer-title {
+    0%, 100% { background-position: 0% center; }
+    50% { background-position: 100% center; }
+}
+
+.hero-subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--color-text-sub);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+}
+
+.title-divider {
+    width: 36px;
+    height: 2px;
+    background: var(--color-primary);
+    border-radius: 1px;
+    box-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+/* 价值卡片网格 */
+.value-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.value-card {
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 0.5px solid var(--color-glass-border);
+}
+
+.value-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--color-primary-soft) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.value-card:hover::before {
+    opacity: 1;
+}
+
+.value-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-glass-border-hover);
+    background: rgba(15, 23, 42, 0.65);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 24px var(--color-primary-soft);
+}
+
+.value-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.value-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-primary-soft);
+    border: 1px solid var(--color-glass-border-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.value-card-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: var(--color-primary);
+    fill: none;
+    stroke-width: 1.5;
+}
+
+.value-card-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.value-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+}
+
+.value-card-number {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-muted);
+    opacity: 0.6;
+}
+
+.value-card-desc {
+    font-size: 11px;
+    color: var(--color-text-sub);
+    line-height: 1.7;
+}
+
+/* 快速导航区域 */
+.quick-nav-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.quick-nav-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--color-text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-nav-label::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-text-muted);
+}
+
+.dock-nav {
+    display: flex;
+    justify-content: flex-start;
+    gap: 14px;
+    padding: 12px 18px;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 0.5px solid var(--color-glass-border);
+    width: fit-content;
+}
+
+.dock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.dock-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--color-primary-soft);
+    border: 1px solid var(--color-glass-border-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.dock-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--color-primary);
+    fill: none;
+    stroke-width: 1.5;
+}
+
+.dock-item:hover .dock-icon {
+    transform: translateY(-5px) scale(1.08);
+    box-shadow: 0 6px 20px var(--color-primary-glow);
+    background: rgba(96, 165, 250, 0.2);
+}
+
+.dock-item:hover .dock-label {
+    color: var(--color-primary);
+}
+
+.dock-label {
+    font-size: 10px;
+    color: var(--color-text-sub);
+    letter-spacing: 0.5px;
+    transition: color var(--transition-fast);
+}
+
+/* 右下角名言 */
+.hero-quote {
+    text-align: right;
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+.hero-quote-text {
+    font-size: 12px;
+    color: var(--color-text-sub);
+    font-style: italic;
+    line-height: 1.7;
+    margin-bottom: 6px;
+    font-family: var(--font-serif);
+    opacity: 0.85;
+}
+
+.hero-quote-author {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 1.5px;
+    font-family: var(--font-mono);
+}
+
+/* ========== 底部行情栏 ========== */
+.ticker-bar {
+    position: fixed;
+    bottom: 68px;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: rgba(5, 8, 22, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 0.5px solid var(--color-glass-border);
+    border-bottom: 0.5px solid var(--color-glass-border);
+    display: flex;
+    align-items: center;
+    z-index: 50;
+    overflow: hidden;
+}
+
+.ticker-left {
+    flex: 1;
+    overflow: hidden;
+}
+
+.ticker-track {
+    display: flex;
+    animation: ticker-scroll 45s linear infinite;
+    white-space: nowrap;
+}
+
+.ticker-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 24px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-sub);
+}
+
+.ticker-name {
+    color: var(--color-text-muted);
+    letter-spacing: 0.3px;
+    font-size: 10px;
+}
+
+.ticker-price {
+    color: var(--color-text-main);
+    font-weight: 500;
+}
+
+.ticker-change.up { color: var(--color-success); }
+.ticker-change.down { color: var(--color-danger); }
+
+@keyframes ticker-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.ticker-right {
+    flex-shrink: 0;
+    padding: 0 24px;
+    border-left: 0.5px solid var(--color-glass-border);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background: rgba(5, 8, 22, 0.9);
+}
+
+.ticker-quote {
+    font-size: 11px;
+    color: var(--color-text-sub);
+    font-family: var(--font-serif);
+    font-style: italic;
+    white-space: nowrap;
+}
+
+/* ========== 底部Dock栏 ========== */
+.bottom-dock {
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    display: none;
+}
+
+/* ========== 音乐按钮 ========== */
+.music-btn {
+    position: fixed;
+    top: 56px;
+    right: 24px;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(var(--blur-glass));
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+    border: 0.5px solid var(--color-glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 90;
+    transition: all var(--transition-fast);
+}
+
+.music-btn:hover {
+    border-color: var(--color-glass-border-hover);
+    box-shadow: 0 0 16px var(--color-primary-soft);
+}
+
+.music-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: var(--color-text-sub);
+    fill: none;
+    stroke-width: 1.5;
+    transition: stroke var(--transition-fast);
+}
+
+.music-btn.playing svg {
+    stroke: var(--color-primary);
+}
+
+.music-btn.playing .music-note {
+    animation: note-float 1.5s ease-in-out infinite;
+}
+
+@keyframes note-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+/* ========== 字幕面板 ========== */
+.subtitle-panel {
+    position: fixed;
+    bottom: 112px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 65%;
+    max-width: 520px;
+    height: 34px;
+    border-radius: 17px;
+    background: rgba(5, 8, 22, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 0.5px solid var(--color-glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 55;
+    transition: all var(--transition-normal);
+}
+
+.subtitle-panel.hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+    pointer-events: none;
+}
+
+.subtitle-content {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.subtitle-text {
+    position: absolute;
+    font-size: 12px;
+    color: var(--color-text-sub);
+    letter-spacing: 2px;
+    white-space: nowrap;
+    font-family: var(--font-serif);
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 0.6s ease;
+}
+
+.subtitle-text.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.subtitle-text.leaving {
+    opacity: 0;
+    transform: translateY(-100%);
+}
+
+.subtitle-toggle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    color: var(--color-text-muted);
+    transition: all var(--transition-fast);
+}
+
+.subtitle-toggle:hover {
+    color: var(--color-primary);
+    background: var(--color-primary-soft);
+}
+
+.subtitle-toggle svg {
+    width: 13px;
+    height: 13px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+}
+
+/* ========== 弹窗系统 ========== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(2, 6, 23, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-window {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 90%;
+    max-width: 980px;
+    height: 80vh;
+    max-height: 760px;
+    border-radius: var(--radius-lg);
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 0.5px solid var(--color-glass-border);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(96, 165, 250, 0.06);
+    z-index: 201;
+    opacity: 0;
+    pointer-events: none;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-window.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.modal-header {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 0.5px solid var(--color-glass-border);
+    cursor: move;
+    flex-shrink: 0;
+    background: rgba(5, 8, 22, 0.5);
+}
+
+.modal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.modal-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.modal-dot.close { background: #ff5f57; }
+.modal-dot.minimize { background: #febc2e; }
+.modal-dot.maximize { background: #28c840; }
+
+.modal-dot:hover {
+    filter: brightness(1.1);
+}
+
+.modal-title {
+    font-size: 11px;
+    color: var(--color-text-sub);
+    font-family: var(--font-mono);
+    letter-spacing: 1px;
+}
+
+.modal-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.modal-body.adjutant-mode {
+    flex-direction: column;
+}
+
+/* 左侧导航 */
+.modal-sidebar {
+    width: 180px;
+    flex-shrink: 0;
+    border-right: 0.5px solid var(--color-glass-border);
+    padding: 24px 14px;
+    overflow-y: auto;
+    background: rgba(5, 8, 22, 0.3);
+}
+
+.modal-sidebar-title {
+    font-size: 9px;
+    color: var(--color-text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    padding-left: 8px;
+    font-family: var(--font-mono);
+}
+
+.modal-nav-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.modal-nav-item {
+    padding: 9px 11px;
+    border-radius: 7px;
+    font-size: 12px;
+    color: var(--color-text-sub);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    position: relative;
+}
+
+.modal-nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 0;
+    background: var(--color-primary);
+    border-radius: 1px;
+    transition: height var(--transition-fast);
+}
+
+.modal-nav-item:hover {
+    background: var(--color-primary-soft);
+    color: var(--color-text-main);
+}
+
+.modal-nav-item.active {
+    color: var(--color-primary);
+    background: var(--color-primary-soft);
+}
+
+.modal-nav-item.active::before {
+    height: 14px;
+}
+
+.modal-nav-icon {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    flex-shrink: 0;
+}
+
+/* 右侧内容区 */
+.modal-content {
+    flex: 1;
+    min-width: 0;
+    padding: 28px 36px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: var(--color-glass-border);
+    border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+
+.content-section {
+    display: none;
+    animation: fade-in-content 0.3s ease;
+}
+
+.content-section.active {
+    display: block;
+}
+
+@keyframes fade-in-content {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.content-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+}
+
+.content-subtitle {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    font-family: var(--font-mono);
+}
+
+.content-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--color-glass-border) 0%, transparent 100%);
+    margin-bottom: 22px;
+}
+
+.paragraph {
+    font-size: 13px;
+    color: var(--color-text-sub);
+    line-height: 2;
+    margin-bottom: 14px;
+    text-align: justify;
+}
+
+.paragraph strong {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+/* 能力三维架构 */
+.arch-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.arch-card {
+    padding: 18px;
+    border-radius: var(--radius-md);
+    background: rgba(5, 8, 22, 0.4);
+    border: 0.5px solid var(--color-glass-border);
+    text-align: center;
+    transition: all var(--transition-normal);
+}
+
+.arch-card:hover {
+    border-color: var(--color-glass-border-hover);
+    transform: translateY(-2px);
+}
+
+.arch-layer {
+    font-size: 9px;
+    color: var(--color-text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 7px;
+    font-family: var(--font-mono);
+}
+
+.arch-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 8px;
+}
+
+.arch-desc {
+    font-size: 11px;
+    color: var(--color-text-sub);
+    line-height: 1.7;
+}
+
+/* 玩家身份卡 */
+.id-card {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 26px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(30, 58, 95, 0.25) 0%, rgba(15, 23, 42, 0.5) 100%);
+    border: 1px solid var(--color-glass-border-hover);
+    box-shadow: 0 0 36px var(--color-primary-soft);
+    position: relative;
+    overflow: hidden;
+}
+
+.id-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, var(--color-primary-soft) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.id-card-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.id-avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+    border: 2px solid var(--color-glass-border-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-size: 22px;
+    color: var(--color-primary);
+    font-weight: 300;
+}
+
+.id-header-text h3 {
+    font-size: 18px;
+    color: var(--color-text-main);
+    margin-bottom: 3px;
+    letter-spacing: 2px;
+}
+
+.id-header-text p {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    letter-spacing: 1px;
+}
+
+.id-info-list {
+    list-style: none;
+    position: relative;
+    z-index: 1;
+}
+
+.id-info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 0.5px solid var(--color-glass-border);
+    font-size: 12px;
+}
+
+.id-info-item:last-child {
+    border-bottom: none;
+}
+
+.id-info-label {
+    color: var(--color-text-muted);
+}
+
+.id-info-value {
+    color: var(--color-text-main);
+    font-weight: 500;
+    text-align: right;
+    max-width: 65%;
+}
+
+/* 时间线 */
+.timeline {
+    position: relative;
+    padding-left: 28px;
+    margin-top: 14px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-glass-border) 100%);
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 24px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -28px;
+    top: 3px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--color-bg-deep);
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+.timeline-date {
+    font-size: 11px;
+    color: var(--color-primary);
+    font-family: var(--font-mono);
+    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+}
+
+.timeline-content {
+    font-size: 12px;
+    color: var(--color-text-sub);
+    line-height: 1.7;
+}
+
+.timeline-content strong {
+    color: var(--color-text-main);
+    font-weight: 500;
+}
+
+/* 项目卡片 */
+.project-card {
+    padding: 20px;
+    border-radius: var(--radius-md);
+    background: rgba(5, 8, 22, 0.4);
+    border: 0.5px solid var(--color-glass-border);
+    margin-bottom: 14px;
+    transition: all var(--transition-normal);
+}
+
+.project-card:hover {
+    border-color: var(--color-glass-border-hover);
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.project-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 3px;
+}
+
+.project-tag {
+    font-size: 9px;
+    color: var(--color-primary);
+    padding: 3px 9px;
+    border-radius: 10px;
+    background: var(--color-primary-soft);
+    border: 0.5px solid var(--color-glass-border-hover);
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.project-points {
+    list-style: none;
+}
+
+.project-point {
+    position: relative;
+    padding-left: 14px;
+    font-size: 12px;
+    color: var(--color-text-sub);
+    line-height: 1.8;
+    margin-bottom: 5px;
+}
+
+.project-point::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--color-primary);
+    font-size: 9px;
+    top: 1px;
+}
+
+/* 技术栈 */
+.tech-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.tech-card {
+    padding: 18px;
+    border-radius: var(--radius-md);
+    background: rgba(5, 8, 22, 0.4);
+    border: 0.5px solid var(--color-glass-border);
+}
+
+.tech-card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.tech-card-title::before {
+    content: '';
+    width: 3px;
+    height: 12px;
+    background: var(--color-primary);
+    border-radius: 2px;
+}
+
+.tech-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tech-tag {
+    font-size: 10px;
+    color: var(--color-text-sub);
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: rgba(5, 8, 22, 0.6);
+    border: 0.5px solid var(--color-glass-border);
+    font-family: var(--font-mono);
+}
+
+/* 资质卡片 */
+.cert-card {
+    padding: 18px 22px;
+    border-radius: var(--radius-md);
+    background: rgba(5, 8, 22, 0.4);
+    border: 0.5px solid var(--color-glass-border);
+    margin-bottom: 12px;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    transition: all var(--transition-normal);
+}
+
+.cert-card:hover {
+    border-color: var(--color-glass-border-hover);
+    transform: translateX(3px);
+}
+
+.cert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 9px;
+    background: var(--color-primary-soft);
+    border: 1px solid var(--color-glass-border-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cert-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: var(--color-primary);
+    fill: none;
+    stroke-width: 1.5;
+}
+
+.cert-info {
+    flex: 1;
+}
+
+.cert-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 3px;
+}
+
+.cert-meta {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    margin-bottom: 7px;
+    font-family: var(--font-mono);
+}
+
+.cert-desc {
+    font-size: 11px;
+    color: var(--color-text-sub);
+    line-height: 1.7;
+}
+
+/* 知识库卡片 */
+.knowledge-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.knowledge-card {
+    padding: 18px;
+    border-radius: var(--radius-md);
+    background: rgba(5, 8, 22, 0.4);
+    border: 0.5px solid var(--color-glass-border);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.knowledge-card:hover {
+    border-color: var(--color-glass-border-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--color-primary-soft);
+}
+
+.knowledge-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: var(--color-primary-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.knowledge-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke: var(--color-primary);
+    fill: none;
+    stroke-width: 1.5;
+}
+
+.knowledge-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 6px;
+}
+
+.knowledge-desc {
+    font-size: 11px;
+    color: var(--color-text-sub);
+    line-height: 1.7;
+}
+
+/* ========== 副官对话模块 ========== */
+.adjutant-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.adjutant-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    border-right: 0.5px solid var(--color-glass-border);
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(5, 8, 22, 0.3);
+}
+
+.adjutant-portrait {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+    border: 2px solid var(--color-glass-border-hover);
+    box-shadow: 0 0 28px var(--color-primary-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    position: relative;
+}
+
+.adjutant-portrait::before {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    border: 1px dashed var(--color-primary-soft);
+    animation: rotate-ring 15s linear infinite;
+}
+
+@keyframes rotate-ring {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.adjutant-portrait-text {
+    font-family: var(--font-serif);
+    font-size: 38px;
+    color: var(--color-primary);
+    text-shadow: 0 0 12px var(--color-primary-glow);
+    letter-spacing: 2px;
+}
+
+.adjutant-name {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 3px;
+    letter-spacing: 2px;
+}
+
+.adjutant-role {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 1px;
+    font-family: var(--font-mono);
+    margin-bottom: 18px;
+}
+
+.adjutant-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--color-success);
+    padding: 5px 12px;
+    border-radius: 10px;
+    background: rgba(52, 211, 153, 0.1);
+    border: 0.5px solid rgba(52, 211, 153, 0.3);
+    font-family: var(--font-mono);
+}
+
+.status-dot-small {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-success);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.adjutant-chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 22px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 5px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--color-glass-border);
+    border-radius: 3px;
+}
+
+.message {
+    display: flex;
+    gap: 10px;
+    max-width: 82%;
+}
+
+.message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-primary-soft);
+    border: 1px solid var(--color-glass-border-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.message.user .message-avatar {
+    background: rgba(96, 165, 250, 0.18);
+}
+
+.message-bubble {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.8;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.message.adjutant .message-bubble {
+    background: rgba(5, 8, 22, 0.6);
+    border: 0.5px solid var(--color-glass-border);
+    color: var(--color-text-sub);
+    border-top-left-radius: 3px;
+}
+
+.message.user .message-bubble {
+    background: rgba(96, 165, 250, 0.12);
+    border: 0.5px solid var(--color-glass-border-hover);
+    color: var(--color-text-main);
+    border-top-right-radius: 3px;
+}
+
+.typing-indicator {
+    display: flex;
+    gap: 3px;
+    padding: 3px 0;
+}
+
+.typing-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-text-muted);
+    animation: typing-bounce 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+}
+
+.chat-input-area {
+    padding: 14px 18px;
+    border-top: 0.5px solid var(--color-glass-border);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: rgba(5, 8, 22, 0.4);
+}
+
+.chat-input {
+    flex: 1;
+    padding: 9px 14px;
+    border-radius: 18px;
+    background: rgba(5, 8, 22, 0.6);
+    border: 0.5px solid var(--color-glass-border);
+    color: var(--color-text-main);
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    resize: none;
+    max-height: 90px;
+    min-height: 36px;
+    line-height: 1.6;
+    transition: border-color var(--transition-fast);
+}
+
+.chat-input:focus {
+    border-color: var(--color-glass-border-hover);
+}
+
+.chat-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-primary-soft);
+    border: 1px solid var(--color-glass-border-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.send-btn:hover {
+    background: rgba(96, 165, 250, 0.25);
+    box-shadow: 0 0 14px var(--color-primary-glow);
+    transform: scale(1.05);
+}
+
+.send-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: var(--color-primary);
+    fill: none;
+    stroke-width: 1.5;
+}
+
+/* ========== 响应式适配 ========== */
+@media (max-width: 1200px) {
+    .main-container {
+        padding: 60px 32px 100px;
+    }
+    
+    .grid-wrapper {
+        max-width: 1100px;
+    }
+}
+
+@media (max-width: 992px) {
+    .grid-wrapper {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .hero-left {
+        height: 380px;
+    }
+    
+    .portrait-container {
+        max-height: 380px;
+    }
+    
+    .hero-right {
+        padding: 0;
+        height: auto;
+    }
+    
+    .modal-window {
+        width: 95%;
+        height: 88vh;
+    }
+    
+    .modal-sidebar {
+        width: 150px;
+    }
+    
+    .subtitle-panel {
+        width: 85%;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        padding: 56px 16px 130px;
+        height: auto;
+        min-height: 100%;
+        overflow-y: auto;
+    }
+    
+    .grid-wrapper {
+        align-items: flex-start;
+    }
+    
+    .hero-main-title {
+        font-size: 24px;
+    }
+    
+    .hero-subtitle {
+        font-size: 13px;
+    }
+    
+    .value-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .dock-nav {
+        gap: 10px;
+        padding: 10px 14px;
+    }
+    
+    .dock-icon {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .dock-icon svg {
+        width: 17px;
+        height: 17px;
+    }
+    
+    .modal-body {
+        flex-direction: column;
+    }
+    
+    .modal-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 0.5px solid var(--color-glass-border);
+        padding: 12px 14px;
+    }
+    
+    .modal-nav-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .modal-content {
+        padding: 20px;
+    }
+    
+    .arch-grid,
+    .tech-grid,
+    .knowledge-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .adjutant-body {
+        flex-direction: column;
+    }
+    
+    .adjutant-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 0.5px solid var(--color-glass-border);
+        padding: 14px;
+    }
+    
+    .subtitle-panel {
+        width: 92%;
+        bottom: 108px;
+    }
+    
+    .ticker-bar {
+        bottom: 64px;
+    }
+    
+    .ticker-right {
+        display: none;
+    }
+    
+    .portrait-name {
+        font-size: 32px;
+        letter-spacing: 5px;
+    }
+}
+
+/* ========== 滚动条全局样式 ========== */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-glass-border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+
+/* ========== 选中文字样式 ========== */
+::selection {
+    background: var(--color-primary-soft);
+    color: var(--color-text-main);
+}
+</style>
+</head>
+<body>
+
+<!-- Canvas背景 -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- 顶部状态栏 -->
+<div class="status-bar">
+    <div class="status-bar-left">
+        <div class="mac-dots">
+            <div class="mac-dot red"></div>
+            <div class="mac-dot yellow"></div>
+            <div class="mac-dot green"></div>
+        </div>
+        <div class="status-brand">
+            <span class="status-name">WEI KAI</span>
+            <span class="status-subtitle">PERSONAL FINANCIAL TERMINAL</span>
+        </div>
+    </div>
+    <div class="status-bar-right">
+        <span>EARTH ONLINE</span>
+        <div class="status-online-dot"></div>
+        <div class="status-signal">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+</div>
+
+<!-- 音乐按钮 -->
+<div class="music-btn" id="musicBtn" title="音乐开关">
+    <svg viewBox="0 0 24 24">
+        <path d="M9 18V5l12-2v13"/>
+        <circle cx="6" cy="18" r="3"/>
+        <circle cx="18" cy="16" r="3"/>
+    </svg>
+</div>
+
+<audio id="bgMusic" loop>
+    <source src="assets/audio/天阔.mp3" type="audio/mpeg">
+</audio>
+
+<!-- 字幕面板 -->
+<div class="subtitle-panel" id="subtitlePanel">
+    <div class="subtitle-content" id="subtitleContent">
+        <div class="subtitle-text active" id="subtitleText">天阔以昭君仁，地厚以载臣德。</div>
+    </div>
+    <button class="subtitle-toggle" id="subtitleToggle" title="隐藏字幕">
+        <svg viewBox="0 0 24 24">
+            <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+    </button>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-container">
+    <div class="grid-wrapper">
+        <!-- 左栏 - 人像区 -->
+        <div class="hero-left">
+            <div class="portrait-container">
+                <img src="assets/portrait.png" alt="WEI KAI" class="portrait-img">
+                <div class="portrait-overlay"></div>
+                <canvas class="portrait-canvas" id="portraitCanvas"></canvas>
+                
+                <!-- 左上角数据流 -->
+                <div class="data-streams">
+                    <div class="data-stream-title">DATA STREAM</div>
+                    <div class="data-stream-item">
+                        <span class="data-stream-label">VALUE</span>
+                        <span class="data-stream-value">28.6</span>
+                    </div>
+                    <div class="data-stream-item">
+                        <span class="data-stream-label">ALPHA</span>
+                        <span class="data-stream-value">19.7</span>
+                    </div>
+                    <div class="data-stream-item">
+                        <span class="data-stream-label">BETA</span>
+                        <span class="data-stream-value">7.3</span>
+                    </div>
+                    <div class="data-stream-item">
+                        <span class="data-stream-label">SHARPE</span>
+                        <span class="data-stream-value">1.82</span>
+                    </div>
+                </div>
+                
+                <!-- MARKET概览 -->
+                <div class="market-chart">
+                    <div class="chart-label">MARKET OVERVIEW · UPDATED 16:58</div>
+                    <canvas class="chart-canvas" id="miniChart"></canvas>
+                </div>
+                
+                <!-- 左下角WEI KAI -->
+                <div class="portrait-caption">
+                    <div class="portrait-name">WEI KAI</div>
+                    <div class="portrait-tags">
+                        <span>ACCOUNTING</span><br>
+                        <span>ACTUARIAL SCIENCE</span><br>
+                        <span>PYTHON / AI IN FINANCE</span>
+                    </div>
+                </div>
+                
+                <!-- 底部标语 -->
+                <div class="portrait-quote">
+                    用数据洞察未来<br>
+                    用智能创造价值
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右栏 - 内容区 -->
+        <div class="hero-right">
+            <!-- 顶部标签栏 -->
+            <div class="hero-top-bar">
+                <div class="hero-section-label">个人终端 / PERSONAL TERMINAL</div>
+                <div class="hero-top-right">
+                    <span class="hero-time" id="heroTime">TIME 16:58:36</span>
+                    <div class="hero-settings">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 标题区 -->
+            <div class="hero-title-section">
+                <h1 class="hero-main-title">魏凯 | Earth Online SSS玩家终端</h1>
+                <div class="hero-subtitle">以会计为基，精算为骨，AI为翼</div>
+                <div class="title-divider"></div>
+            </div>
+            
+            <!-- 价值卡片 -->
+            <div class="value-cards">
+                <div class="value-card" onclick="openModal('profile', 0)">
+                    <div class="value-card-number">01</div>
+                    <div class="value-card-header">
+                        <div class="value-card-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                            </svg>
+                        </div>
+                        <div class="value-card-text">
+                            <h3 class="value-card-title">AI赋能金融分析</h3>
+                        </div>
+                    </div>
+                    <p class="value-card-desc">运用AI与数据分析技术，挖掘数据价值，洞察金融本质。</p>
+                </div>
+                
+                <div class="value-card" onclick="openModal('profile', 0)">
+                    <div class="value-card-number">02</div>
+                    <div class="value-card-header">
+                        <div class="value-card-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                <path d="M2 17l10 5 10-5"/>
+                                <path d="M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <div class="value-card-text">
+                            <h3 class="value-card-title">量化驱动价值创造</h3>
+                        </div>
+                    </div>
+                    <p class="value-card-desc">以量化模型与策略为核心，实现风险调整后的持续增值。</p>
+                </div>
+                
+                <div class="value-card" onclick="openModal('academic', 0)">
+                    <div class="value-card-number">03</div>
+                    <div class="value-card-header">
+                        <div class="value-card-icon">
+                            <svg viewBox="0 0 24 24">
+                                <polyline points="16 18 22 12 16 6"/>
+                                <polyline points="8 6 2 12 8 18"/>
+                            </svg>
+                        </div>
+                        <div class="value-card-text">
+                            <h3 class="value-card-title">会计 | 精算 | Python | AI金融</h3>
+                        </div>
+                    </div>
+                    <p class="value-card-desc">复合知识结构驱动跨领域融合，构建系统化金融解决方案。</p>
+                </div>
+                
+                <div class="value-card" onclick="openModal('observation', 3)">
+                    <div class="value-card-number">04</div>
+                    <div class="value-card-header">
+                        <div class="value-card-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
+                            </svg>
+                        </div>
+                        <div class="value-card-text">
+                            <h3 class="value-card-title">长期主义复合型金融探索者</h3>
+                        </div>
+                    </div>
+                    <p class="value-card-desc">持续学习与深度思考，追求长期价值与社会影响力。</p>
+                </div>
+            </div>
+            
+            <!-- 快速导航 -->
+            <div class="quick-nav-section">
+                <div class="quick-nav-label">快速导航 / QUICK ACCESS</div>
+                <div class="dock-nav">
+                    <div class="dock-item" onclick="openModal('profile', 0)" title="档案">
+                        <div class="dock-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <span class="dock-label">档案</span>
+                    </div>
+                    
+                    <div class="dock-item" onclick="openModal('academic', 0)" title="学业">
+                        <div class="dock-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                            </svg>
+                        </div>
+                        <span class="dock-label">学业</span>
+                    </div>
+                    
+                    <div class="dock-item" onclick="openModal('project', 0)" title="项目">
+                        <div class="dock-icon">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                            </svg>
+                        </div>
+                        <span class="dock-label">项目</span>
+                    </div>
+                    
+                    <div class="dock-item" onclick="openModal('cert', 0)" title="资质">
+                        <div class="dock-icon">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="8" r="6"/>
+                                <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+                            </svg>
+                        </div>
+                        <span class="dock-label">资质</span>
+                    </div>
+                    
+                    <div class="dock-item" onclick="openModal('knowledge', 0)" title="知识">
+                        <div class="dock-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                        </div>
+                        <span class="dock-label">知识</span>
+                    </div>
+                    
+                    <div class="dock-item" onclick="openModal('observation', 0)" title="观察">
+                        <div class="dock-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </div>
+                        <span class="dock-label">观察</span>
+                    </div>
+                    
+                    <div class="dock-item" onclick="openModal('adjutant', 0)" title="副官">
+                        <div class="dock-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
+                        </div>
+                        <span class="dock-label">副官</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右下角名言 -->
+            <div class="hero-quote">
+                <div class="hero-quote-text">"最好的未来，是用数据与智慧创造出来的。"</div>
+                <div class="hero-quote-author">—— WEI KAI</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 底部行情栏 -->
+<div class="ticker-bar">
+    <div class="ticker-left">
+        <div class="ticker-track">
+            <div class="ticker-item">
+                <span class="ticker-name">SSE</span>
+                <span class="ticker-price">3,124.04</span>
+                <span class="ticker-change up">+0.32%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">NASDAQ</span>
+                <span class="ticker-price">16,987.21</span>
+                <span class="ticker-change down">-0.08%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">BTC/USDT</span>
+                <span class="ticker-price">67,842.11</span>
+                <span class="ticker-change up">+1.27%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">GOLD</span>
+                <span class="ticker-price">2,395.61</span>
+                <span class="ticker-change up">+0.15%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">SSE 50</span>
+                <span class="ticker-price">2,567.38</span>
+                <span class="ticker-change up">+0.21%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">CSI 300</span>
+                <span class="ticker-price">3,782.45</span>
+                <span class="ticker-change down">-0.12%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">SSE</span>
+                <span class="ticker-price">3,124.04</span>
+                <span class="ticker-change up">+0.32%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">NASDAQ</span>
+                <span class="ticker-price">16,987.21</span>
+                <span class="ticker-change down">-0.08%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">BTC/USDT</span>
+                <span class="ticker-price">67,842.11</span>
+                <span class="ticker-change up">+1.27%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">GOLD</span>
+                <span class="ticker-price">2,395.61</span>
+                <span class="ticker-change up">+0.15%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">SSE 50</span>
+                <span class="ticker-price">2,567.38</span>
+                <span class="ticker-change up">+0.21%</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-name">CSI 300</span>
+                <span class="ticker-price">3,782.45</span>
+                <span class="ticker-change down">-0.12%</span>
+            </div>
+        </div>
+    </div>
+    <div class="ticker-right">
+        <span class="ticker-quote">"最好的未来，是用数据与智慧创造出来的。" — WEI KAI</span>
+    </div>
+</div>
+
+<!-- 弹窗遮罩 -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+
+<!-- 通用弹窗模板 -->
+<div class="modal-window" id="modalWindow">
+    <div class="modal-header" id="modalHeader">
+        <div class="modal-header-left">
+            <div class="modal-dots">
+                <div class="modal-dot close" onclick="closeModal()"></div>
+                <div class="modal-dot minimize"></div>
+                <div class="modal-dot maximize"></div>
+            </div>
+            <span class="modal-title" id="modalTitle">档案 · 自我叙事终端</span>
+        </div>
+    </div>
+    <div class="modal-body" id="modalBody">
+        <!-- 动态注入内容 -->
+    </div>
+</div>
+
+<script>
+/* ============================================================
+ *  个人金融终端 · 核心脚本
+ *  模块：背景系统 / 弹窗系统 / 副官系统 / 音字幕系统 / 实时时间
+ * ============================================================ */
+
+/* ========== 1. Canvas三层景深背景系统 ========== */
+(function initBackground() {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let width, height;
+    let nebulaCanvas, starField, lightRays;
+    
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        nebulaCanvas = createNebula();
+        starField = createStars();
+    }
+    
+    resize();
+    window.addEventListener('resize', resize);
+    
+    function createNebula() {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = width;
+        offCanvas.height = height;
+        const offCtx = offCanvas.getContext('2d');
+        
+        const nebulae = [
+            { x: width * 0.25, y: height * 0.35, r: 320, color: 'rgba(59, 130, 246, 0.05)' },
+            { x: width * 0.75, y: height * 0.55, r: 280, color: 'rgba(139, 92, 246, 0.04)' },
+            { x: width * 0.5, y: height * 0.25, r: 220, color: 'rgba(6, 182, 212, 0.04)' },
+            { x: width * 0.15, y: height * 0.65, r: 200, color: 'rgba(59, 130, 246, 0.035)' },
+        ];
+        
+        nebulae.forEach(neb => {
+            const gradient = offCtx.createRadialGradient(neb.x, neb.y, 0, neb.x, neb.y, neb.r);
+            gradient.addColorStop(0, neb.color);
+            gradient.addColorStop(1, 'transparent');
+            offCtx.fillStyle = gradient;
+            offCtx.fillRect(0, 0, width, height);
+        });
+        
+        return offCanvas;
+    }
+    
+    function createStars() {
+        const stars = [];
+        const starCount = Math.floor((width * height) / 7000);
+        
+        for (let i = 0; i < starCount; i++) {
+            stars.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 1.4 + 0.4,
+                speedX: (Math.random() - 0.5) * 0.12,
+                speedY: (Math.random() - 0.5) * 0.08,
+                opacity: Math.random() * 0.5 + 0.2,
+                twinkleSpeed: Math.random() * 0.02 + 0.008,
+                twinklePhase: Math.random() * Math.PI * 2
+            });
+        }
+        
+        return stars;
+    }
+    
+    function createLightRays() {
+        return [
+            { x: -180, y: height * 0.25, width: 360, speed: 0.25, opacity: 0.025 },
+            { x: width * 0.4, y: height * 0.65, width: 280, speed: 0.18, opacity: 0.02 },
+        ];
+    }
+    
+    lightRays = createLightRays();
+    
+    let nebulaOffset = 0;
+    
+    function animate() {
+        ctx.fillStyle = '#050816';
+        ctx.fillRect(0, 0, width, height);
+        
+        nebulaOffset += 0.04;
+        ctx.globalAlpha = 1;
+        ctx.drawImage(nebulaCanvas, 
+            Math.sin(nebulaOffset * 0.001) * 15, 
+            Math.cos(nebulaOffset * 0.001) * 8
+        );
+        
+        starField.forEach(star => {
+            star.x += star.speedX;
+            star.y += star.speedY;
+            star.twinklePhase += star.twinkleSpeed;
+            
+            if (star.x < 0) star.x = width;
+            if (star.x > width) star.x = 0;
+            if (star.y < 0) star.y = height;
+            if (star.y > height) star.y = 0;
+            
+            const twinkle = Math.sin(star.twinklePhase) * 0.3 + 0.7;
+            const opacity = star.opacity * twinkle;
+            
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(148, 197, 255, ${opacity})`;
+            ctx.fill();
+            
+            if (star.size > 1.1) {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(96, 165, 250, ${opacity * 0.25})`;
+                ctx.fill();
+            }
+        });
+        
+        lightRays.forEach(ray => {
+            ray.x += ray.speed;
+            if (ray.x > width + ray.width) {
+                ray.x = -ray.width;
+            }
+            
+            const gradient = ctx.createLinearGradient(
+                ray.x - ray.width / 2, ray.y,
+                ray.x + ray.width / 2, ray.y
+            );
+            gradient.addColorStop(0, 'transparent');
+            gradient.addColorStop(0.5, `rgba(96, 165, 250, ${ray.opacity})`);
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.moveTo(ray.x - ray.width / 2, ray.y - 80);
+            ctx.lineTo(ray.x + ray.width / 2, ray.y - 40);
+            ctx.lineTo(ray.x + ray.width / 2, ray.y + 180);
+            ctx.lineTo(ray.x - ray.width / 2, ray.y + 140);
+            ctx.closePath();
+            ctx.fill();
+        });
+        
+        requestAnimationFrame(animate);
+    }
+    
+    animate();
+})();
+
+/* ========== 2. 肖像区粒子特效 ========== */
+(function initPortraitEffect() {
+    const canvas = document.getElementById('portraitCanvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const container = canvas.parentElement;
+    
+    function resize() {
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+    }
+    
+    resize();
+    
+    const particles = [];
+    const particleCount = 50;
+    
+    for (let i = 0; i < particleCount; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 1.8 + 0.5,
+            speedX: (Math.random() - 0.5) * 0.4,
+            speedY: (Math.random() - 0.5) * 0.4,
+            opacity: Math.random() * 0.5 + 0.15,
+            pulseSpeed: Math.random() * 0.03 + 0.01,
+            pulsePhase: Math.random() * Math.PI * 2
+        });
+    }
+    
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const centerX = canvas.width * 0.35;
+        const centerY = canvas.height * 0.4;
+        const radius = 140;
+        
+        particles.forEach((p1, i) => {
+            particles.slice(i + 1).forEach(p2 => {
+                const dx = p1.x - p2.x;
+                const dy = p1.y - p2.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 70) {
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.strokeStyle = `rgba(96, 165, 250, ${0.1 * (1 - dist / 70)})`;
+                    ctx.stroke();
+                }
+            });
+        });
+        
+        particles.forEach(p => {
+            p.x += p.speedX;
+            p.y += p.speedY;
+            p.pulsePhase += p.pulseSpeed;
+            
+            if (p.x < 0) p.x = canvas.width;
+            if (p.x > canvas.width) p.x = 0;
+            if (p.y < 0) p.y = canvas.height;
+            if (p.y > canvas.height) p.y = 0;
+            
+            const pulse = Math.sin(p.pulsePhase) * 0.3 + 0.7;
+            const opacity = p.opacity * pulse;
+            
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(129, 192, 255, ${opacity})`;
+            ctx.fill();
+            
+            if (p.size > 1.3) {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(96, 165, 250, ${opacity * 0.18})`;
+                ctx.fill();
+            }
+        });
+        
+        requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    window.addEventListener('resize', () => {
+        resize();
+    });
+})();
+
+/* ========== 3. 迷你图表 ========== */
+(function initMiniChart() {
+    const canvas = document.getElementById('miniChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = 44 * 2;
+    ctx.scale(2, 2);
+    
+    const width = canvas.offsetWidth;
+    const height = 44;
+    
+    const points = [];
+    let val = 22;
+    for (let i = 0; i < 55; i++) {
+        val += (Math.random() - 0.47) * 2.5;
+        val = Math.max(6, Math.min(38, val));
+        points.push(val);
+    }
+    
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        
+        const maxVal = Math.max(...points);
+        const minVal = Math.min(...points);
+        const range = maxVal - minVal || 1;
+        
+        ctx.beginPath();
+        ctx.moveTo(0, height);
+        points.forEach((p, i) => {
+            const x = (i / (points.length - 1)) * width;
+            const y = height - ((p - minVal) / range) * (height - 8) - 4;
+            ctx.lineTo(x, y);
+        });
+        ctx.lineTo(width, height);
+        ctx.closePath();
+        
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, 'rgba(96, 165, 250, 0.18)');
+        gradient.addColorStop(1, 'rgba(96, 165, 250, 0.02)');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        ctx.beginPath();
+        points.forEach((p, i) => {
+            const x = (i / (points.length - 1)) * width;
+            const y = height - ((p - minVal) / range) * (height - 8) - 4;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = 'rgba(96, 165, 250, 0.55)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        
+        const barCount = 18;
+        for (let i = 0; i < barCount; i++) {
+            const barX = (i / barCount) * width + width / barCount / 2;
+            const barH = Math.random() * 9 + 2;
+            ctx.fillStyle = `rgba(96, 165, 250, ${0.15 + Math.random() * 0.18})`;
+            ctx.fillRect(barX - 1, height - barH, 2, barH);
+        }
+    }
+    
+    draw();
+})();
+
+/* ========== 4. 实时时间 ========== */
+(function updateTime() {
+    function setTime() {
+        const el = document.getElementById('heroTime');
+        if (!el) return;
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        el.textContent = `TIME ${h}:${m}:${s}`;
+    }
+    setTime();
+    setInterval(setTime, 1000);
+})();
+
+/* ========== 5. 弹窗系统 ========== */
+const modalData = {
+    profile: {
+        title: '档案 · 自我叙事终端',
+        nav: [
+            { icon: 'target', label: '核心定位' },
+            { icon: 'star', label: '成长信条' },
+            { icon: 'layers', label: '能力三维架构' },
+            { icon: 'user', label: '玩家身份卡' },
+            { icon: 'clock', label: '成长时间线' }
+        ],
+        content: [
+            {
+                title: '核心定位',
+                subtitle: 'CORE POSITIONING',
+                body: `<p class="paragraph">跨领域复合型金融学习者，长期主义践行者。以「会计为基、精算为骨、AI为翼」为核心方法论，在传统金融与前沿科技的交汇地带构建独特竞争力。</p>
+                <p class="paragraph">跳出传统财会单一赛道，搭建<strong>「财会落地+精算数理+AI量化」</strong>三维能力体系，坚持长期稳态沉淀，拒绝短期浮躁内卷。不追逐风口、不盲从热点，以深度学习与系统思考驱动持续进化。</p>
+                <p class="paragraph">以会计为根基理解商业运作本质——从资产负债表透视企业战略，从现金流量表洞察经营质量，从利润表拆解盈利引擎；以精算数理论构风险定价模型——将不确定性转化为可量化的决策依据；以AI技术赋能金融分析效率——用算法扩展认知边界，用数据驱动投资决策。</p>
+                <p class="paragraph">三者融合形成不可替代的复合竞争力：既能深入业务理解商业逻辑，又能跳出细节构建量化模型，更能借助技术手段实现规模化分析。这种「业务+数理+技术」的三角结构，是应对金融行业数字化转型最坚实的能力护城河。</p>
+                <div class="arch-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 24px;">
+                    <div class="arch-card">
+                        <div class="arch-layer">业务洞察</div>
+                        <div class="arch-title">商业本质</div>
+                        <div class="arch-desc">通过财报三维透视，理解企业战略与经营质量</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">数理建模</div>
+                        <div class="arch-title">风险定价</div>
+                        <div class="arch-desc">将不确定性转化为可量化、可决策的模型语言</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">技术赋能</div>
+                        <div class="arch-title">智能分析</div>
+                        <div class="arch-desc">用算法扩展认知边界，用数据驱动规模化决策</div>
+                    </div>
+                </div>
+                <p class="paragraph" style="margin-top: 20px;">自我定位不是静态标签，而是持续迭代的方向坐标。在每一个阶段重新审视能力边界，在每一次实践中校准成长方向，让定位随认知升级而不断精进。</p>`
+            },
+            {
+                title: '成长信条',
+                subtitle: 'GROWTH CREDO',
+                body: `<p class="paragraph"><strong>复利是世界第八大奇迹，深度沉淀是唯一长期捷径。</strong>不追求爆发式增长，而追求持续性积累；不渴望一夜成名，而渴望厚积薄发。每一次深度学习、每一个模型构建、每一行代码打磨，都是在为未来的自己存入复利本金。</p>
+                <p class="paragraph">人生是持续迭代的修行，不以单次输赢定义结果。短期得失是噪音，长期趋势才是信号。不急求速成、不盲从热门赛道，搭建自身不可替代核心竞争力——别人能复制的技能终将贬值，自己独特的能力组合才会持续增值。</p>
+                <p class="paragraph">在浮躁的时代保持节奏，在喧嚣的环境守护定力。信息过载的时代，最稀缺的不是知识而是专注力；选择泛滥的时代，最珍贵的不是机会而是定力。用时间的厚度积累专业的深度，让每一份努力都具备复利价值。</p>
+                <p class="paragraph"><strong>知行合一，以用促学。</strong>知识不在量而在用，理论不在多而在精。每一个学习方向都必须落地为实践项目，每一个实践项目都必须反哺认知迭代。学以致用、用以促学、学用相长，形成知行闭环。</p>
+                <p class="paragraph"><strong>长期主义不是慢，而是稳。</strong>稳不是保守，而是在不确定中寻找确定性；长期不是拖延，而是在方向正确时持续投入。以十年为单位思考，以每一天为单位行动，让宏大愿景分解为可执行的日常。</p>
+                <div class="arch-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 24px;">
+                    <div class="arch-card">
+                        <div class="arch-layer">信条一</div>
+                        <div class="arch-title">深度沉淀</div>
+                        <div class="arch-desc">拒绝浅尝辄止，每一个领域都追求专业级理解与实操能力</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">信条二</div>
+                        <div class="arch-title">长期复利</div>
+                        <div class="arch-desc">以时间为杠杆，让每一份积累产生指数级回报</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">信条三</div>
+                        <div class="arch-title">知行合一</div>
+                        <div class="arch-desc">理论指导实践，实践验证理论，形成认知闭环</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">信条四</div>
+                        <div class="arch-title">稳中求进</div>
+                        <div class="arch-desc">在不确定中寻找确定性，在方向正确时持续投入</div>
+                    </div>
+                </div>`
+            },
+            {
+                title: '能力三维架构',
+                subtitle: 'THREE-DIMENSIONAL CAPABILITY ARCHITECTURE',
+                body: `<p class="paragraph">以「基底层→核心层→拓展层」为递进逻辑，构建从商业理解到技术赋能的完整能力矩阵。每一层既独立深耕，又向上支撑，形成层层递进的复合竞争力。</p>
+                <div class="arch-grid">
+                    <div class="arch-card">
+                        <div class="arch-layer">基底层</div>
+                        <div class="arch-title">财会落地</div>
+                        <div class="arch-desc">完整会计核算、财务分析能力，支撑商业业务落地。从凭证到报表、从核算到分析、从合规到决策，构建扎实的商业语言体系。</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">核心层</div>
+                        <div class="arch-title">精算数理</div>
+                        <div class="arch-desc">精算数理、风险建模能力，构建量化专业壁垒。概率论、数理统计、利息理论、风险理论交织融合，形成严谨的量化思维。</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">拓展层</div>
+                        <div class="arch-title">AI量化</div>
+                        <div class="arch-desc">AI工具、编程开发能力，适配金融数字化转型。Python编程、数据科学、机器学习、大模型应用，让技术成为能力放大器。</div>
+                    </div>
+                </div>
+                <div class="arch-grid" style="margin-top: 14px;">
+                    <div class="arch-card">
+                        <div class="arch-layer">基底层 · 技能矩阵</div>
+                        <div class="arch-title">财务全链路</div>
+                        <div class="arch-desc">会计准则应用 · 财务报表编制 · 财务比率分析 · 成本核算管理 · 预算编制与控制 · 税务筹划基础 · 审计流程理解 · 内控体系搭建</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">核心层 · 技能矩阵</div>
+                        <div class="arch-title">量化风控链路</div>
+                        <div class="arch-desc">概率统计建模 · 利息理论与现金流 · 生命表与精算假设 · 风险模型构建 · 定价与估值 · 准备金评估 · 资本管理 · 再保险分析</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">拓展层 · 技能矩阵</div>
+                        <div class="arch-title">智能技术链路</div>
+                        <div class="arch-desc">Python数据处理 · Pandas/NumPy · 数据可视化 · 机器学习建模 · 大模型Prompt工程 · 自动化脚本 · Web开发基础 · 量化策略回测</div>
+                    </div>
+                </div>
+                <p class="paragraph" style="margin-top: 20px;">三维架构的核心价值在于<strong>交叉融合</strong>：财会业务理解让量化模型不脱离实际，精算数理思维让财务分析超越描述性统计，AI技术能力让前两者的成果规模化落地。三者叠加产生的不是加法效应，而是乘法效应。</p>`
+            },
+            {
+                title: '玩家身份卡',
+                subtitle: 'PLAYER IDENTITY CARD',
+                body: `<div class="id-card">
+                    <div class="id-card-header">
+                        <div class="id-avatar">魏</div>
+                        <div class="id-header-text">
+                            <h3>WEI KAI</h3>
+                            <p>PLAYER ID · WK-2001-SSS</p>
+                        </div>
+                    </div>
+                    <ul class="id-info-list">
+                        <li class="id-info-item"><span class="id-info-label">玩家等级</span><span class="id-info-value">Lv.24 · 持续进阶中</span></li>
+                        <li class="id-info-item"><span class="id-info-label">职业路径</span><span class="id-info-value">会计 → 精算 → AI量化</span></li>
+                        <li class="id-info-item"><span class="id-info-label">主属性</span><span class="id-info-value">数理 · 分析 · 编程</span></li>
+                        <li class="id-info-item"><span class="id-info-label">阵营归属</span><span class="id-info-value">长期主义联盟</span></li>
+                        <li class="id-info-item"><span class="id-info-label">核心技能</span><span class="id-info-value">财务分析 / 风险建模 / Python</span></li>
+                        <li class="id-info-item"><span class="id-info-label">活跃区域</span><span class="id-info-value">金融 · 科技 · 数据</span></li>
+                        <li class="id-info-item"><span class="id-info-label">装备品质</span><span class="id-info-value">SSR · 复合型天赋</span></li>
+                        <li class="id-info-item"><span class="id-info-label">成长状态</span><span class="id-info-value">稳步升阶 · 深度沉淀</span></li>
+                        <li class="id-info-item"><span class="id-info-label">当前任务</span><span class="id-info-value">构建AI量化分析体系</span></li>
+                        <li class="id-info-item"><span class="id-info-label">终极目标</span><span class="id-info-value">复合型金融价值创造者</span></li>
+                    </ul>
+                </div>
+                <p class="paragraph" style="margin-top: 20px; text-align: center;">人生如游戏，每一次学习是获取经验值，每一个项目是完成副本，每一次挑战是攻略Boss。区别在于——这场游戏没有终点，只有不断解锁的新地图与更强大的自己。</p>`
+            },
+            {
+                title: '成长时间线',
+                subtitle: 'GROWTH TIMELINE',
+                body: `<div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">PHASE 01 · 启蒙期</div>
+                        <div class="timeline-content"><strong>财会根基奠定</strong> · 系统学习会计学原理与财务管理体系，从借贷记账法到三大报表编制，构建商业语言的基础认知。初步理解企业运营的资金流转逻辑与财务健康度的衡量维度。</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">PHASE 02 · 拓展期</div>
+                        <div class="timeline-content"><strong>精算数理进阶</strong> · 深入精算数学领域，掌握概率论、数理统计、利息理论、生命表构造与风险模型。从描述性分析升级为预测性建模，构建量化思维与风险定价能力。</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">PHASE 03 · 融合期</div>
+                        <div class="timeline-content"><strong>编程能力觉醒</strong> · 系统学习Python编程与数据科学技术栈，将财会业务理解与精算数理模型通过代码落地。从手工分析迈向自动化处理，从单一计算迈向规模化分析。</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">PHASE 04 · 跃迁期</div>
+                        <div class="timeline-content"><strong>AI量化探索</strong> · 融合机器学习与大模型技术，探索AI赋能金融分析的创新路径。构建智能投研、量化回测、风险预警等原型系统，让技术成为能力放大器。</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">PHASE 05 · 沉淀期</div>
+                        <div class="timeline-content"><strong>复合体系成型</strong> · 三维能力体系初步贯通，「财会+精算+AI」形成闭环。从单点技能升级为系统能力，从知识积累迈向价值创造，进入深度沉淀与持续输出阶段。</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">PHASE 06 · 进阶期（当前）</div>
+                        <div class="timeline-content"><strong>持续精进中</strong> · 深化各领域专业度，拓展实战项目广度。以长期主义为锚，以复利思维为帆，在金融数字化浪潮中稳步前行，持续构建不可替代的复合竞争力。</div>
+                    </div>
+                </div>`
+            }
+        ]
+    },
+
+    academic: {
+        title: '学业 · 知识体系矩阵',
+        nav: [
+            { icon: 'book', label: '财会体系' },
+            { icon: 'calc', label: '精算数理' },
+            { icon: 'code', label: '编程开发' },
+            { icon: 'brain', label: 'AI金融' }
+        ],
+        content: [
+            {
+                title: '财会体系',
+                subtitle: 'ACCOUNTING & FINANCE SYSTEM',
+                body: `<p class="paragraph">以会计学为根基，系统构建从核算到分析、从合规到决策的完整财会知识体系。不仅掌握「怎么做」，更理解「为什么」——每一笔分录背后是商业逻辑，每一张报表背后是战略选择。</p>
+                <p class="paragraph"><strong>学习方法论：</strong>理论框架+案例拆解+实战演练三位一体。先建立准则层面的规范认知，再通过真实企业财报拆解业务模式，最后在模拟环境中完成从分析到决策的全链路闭环。</p>
+                <div class="arch-grid">
+                    <div class="arch-card">
+                        <div class="arch-layer">核心课程</div>
+                        <div class="arch-title">会计学原理</div>
+                        <div class="arch-desc">借贷记账法 · 会计循环 · 凭证账簿 · 试算平衡 · 期末调整 · 报表编制基础</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">核心课程</div>
+                        <div class="arch-title">中级财务会计</div>
+                        <div class="arch-desc">资产 · 负债 · 所有者权益 · 收入 · 费用 · 利润 · 报表列报与披露</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">核心课程</div>
+                        <div class="arch-title">财务管理</div>
+                        <div class="arch-desc">货币时间价值 · 资本预算 · 资本结构 · 营运资金 · 财务分析 · 估值模型</div>
+                    </div>
+                </div>
+                <div class="arch-grid" style="margin-top: 14px;">
+                    <div class="arch-card">
+                        <div class="arch-layer">进阶课程</div>
+                        <div class="arch-title">成本与管理会计</div>
+                        <div class="arch-desc">成本归集与分配 · 本量利分析 · 标准成本 · 作业成本法 · 预算管理 · 绩效评价</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">进阶课程</div>
+                        <div class="arch-title">审计学</div>
+                        <div class="arch-desc">审计准则 · 审计程序 · 内控测试 · 实质性程序 · 审计报告 · 风险评估</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">进阶课程</div>
+                        <div class="arch-title">税法基础</div>
+                        <div class="arch-desc">增值税 · 企业所得税 · 个人所得税 · 税收筹划 · 税务合规与申报</div>
+                    </div>
+                </div>
+                <p class="paragraph" style="margin-top: 20px;"><strong>学习成果：</strong>能够独立完成企业财报分析报告，从盈利能力、偿债能力、运营能力、成长能力四个维度全面评估企业财务健康度，并提出战略性建议。具备从会计信息反推商业模式、从财务数据洞察管理问题的深度分析能力。</p>`
+            },
+            {
+                title: '精算数理',
+                subtitle: 'ACTUARIAL & MATHEMATICAL SYSTEM',
+                body: `<p class="paragraph">精算是数学与金融的深度交叉，是用严谨的数理方法量化和管理风险的学科。从概率统计到利息理论，从生命表到风险模型，构建一套将不确定性转化为可定价、可管理决策的科学体系。</p>
+                <p class="paragraph"><strong>学习方法论：</strong>以数学推导为骨架，以金融场景为血肉。每一个公式都回归其业务本源——概率分布描述风险特征，利息理论刻画资金时间价值，生命表反映人口规律，模型构建服务定价决策。</p>
+                <div class="arch-grid">
+                    <div class="arch-card">
+                        <div class="arch-layer">数学基础</div>
+                        <div class="arch-title">概率论与数理统计</div>
+                        <div class="arch-desc">随机变量 · 概率分布 · 大数定律 · 中心极限定理 · 参数估计 · 假设检验 · 回归分析</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">数学基础</div>
+                        <div class="arch-title">利息理论</div>
+                        <div class="arch-desc">单利复利 · 现值终值 · 年金 · 收益率 · 债券定价 · 久期与凸性 · 免疫策略</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">数学基础</div>
+                        <div class="arch-title">数值计算方法</div>
+                        <div class="arch-desc">数值积分 · 插值与拟合 · 蒙特卡洛模拟 · 随机过程 · 马尔可夫链 · 差分方程</div>
+                    </div>
+                </div>
+                <div class="arch-grid" style="margin-top: 14px;">
+                    <div class="arch-card">
+                        <div class="arch-layer">精算核心</div>
+                        <div class="arch-title">生存模型与生命表</div>
+                        <div class="arch-desc">生存函数 · 死亡力 · 生命表构造 · 多减因表 · 选择与终极生命表 · 人口预测</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">精算核心</div>
+                        <div class="arch-title">精算数学</div>
+                        <div class="arch-desc">寿险精算 · 年金精算 · 净保费 · 毛保费 · 准备金评估 · 现金价值 · 红利分配</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">精算核心</div>
+                        <div class="arch-title">风险模型</div>
+                        <div class="arch-desc">损失分布 · 频率与严重度模型 · 风险聚合 · 再保险 · 信度理论 · 破产理论</div>
+                    </div>
+                </div>
+                <p class="paragraph" style="margin-top: 20px;"><strong>学习成果：</strong>构建了完整的精算思维框架，能够独立完成寿险产品精算定价、准备金评估与风险测算。具备将精算方法迁移至更广泛金融场景的能力——用风险模型评估投资组合，用概率分布刻画收益不确定性，用模拟方法进行压力测试。</p>`
+            },
+            {
+                title: '编程开发',
+                subtitle: 'PROGRAMMING & DEVELOPMENT',
+                body: `<p class="paragraph">以Python为核心，系统构建从数据处理到模型开发、从自动化脚本到Web应用的完整编程能力。编程不仅是工具，更是思维方式——将模糊问题结构化，将复杂流程自动化，将隐含逻辑显性化。</p>
+                <p class="paragraph"><strong>学习方法论：</strong>项目驱动+刻意练习。每一个语法特性都在真实项目中掌握，每一个库的使用都解决具体问题。从读懂别人的代码到写出自己的框架，从单文件脚本到模块化工程，循序渐进。</p>
+                <div class="tech-grid">
+                    <div class="tech-card">
+                        <div class="tech-card-title">Python核心</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">基础语法</span>
+                            <span class="tech-tag">面向对象</span>
+                            <span class="tech-tag">装饰器</span>
+                            <span class="tech-tag">生成器</span>
+                            <span class="tech-tag">异常处理</span>
+                            <span class="tech-tag">文件操作</span>
+                            <span class="tech-tag">多线程</span>
+                            <span class="tech-tag">异步编程</span>
+                        </div>
+                    </div>
+                    <div class="tech-card">
+                        <div class="tech-card-title">数据科学栈</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">NumPy</span>
+                            <span class="tech-tag">Pandas</span>
+                            <span class="tech-tag">Matplotlib</span>
+                            <span class="tech-tag">Seaborn</span>
+                            <span class="tech-tag">SciPy</span>
+                            <span class="tech-tag">Plotly</span>
+                            <span class="tech-tag">Jupyter</span>
+                        </div>
+                    </div>
+                    <div class="tech-card">
+                        <div class="tech-card-title">机器学习栈</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">Scikit-learn</span>
+                            <span class="tech-tag">TensorFlow</span>
+                            <span class="tech-tag">PyTorch</span>
+                            <span class="tech-tag">XGBoost</span>
+                            <span class="tech-tag">特征工程</span>
+                            <span class="tech-tag">模型调优</span>
+                        </div>
+                    </div>
+                    <div class="tech-card">
+                        <div class="tech-card-title">工程化工具</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">Git</span>
+                            <span class="tech-tag">VS Code</span>
+                            <span class="tech-tag">Docker</span>
+                            <span class="tech-tag">Linux</span>
+                            <span class="tech-tag">REST API</span>
+                            <span class="tech-tag">Flask</span>
+                            <span class="tech-tag">Streamlit</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="paragraph" style="margin-top: 20px;"><strong>学习成果：</strong>能够独立完成数据清洗、分析、可视化到建模部署的全流程。具备将金融业务问题转化为编程任务、将手工分析流程升级为自动化系统、将单次计算扩展为批量处理的工程化能力。</p>`
+            },
+            {
+                title: 'AI金融',
+                subtitle: 'AI IN FINANCE',
+                body: `<p class="paragraph">探索人工智能与金融分析的深度融合，从传统机器学习到大模型应用，构建智能化的金融分析工具体系。让AI成为认知放大器——扩展分析覆盖面、提升决策时效性、发现人工难以察觉的隐性模式。</p>
+                <p class="paragraph"><strong>核心理念：</strong>AI不替代人，而是增强人。模型的价值不在于复杂度，而在于解决实际问题的有效性。坚持以业务理解驱动技术选型，以数据质量决定模型上限，以可解释性保障决策可信。</p>
+                <div class="arch-grid">
+                    <div class="arch-card">
+                        <div class="arch-layer">应用方向</div>
+                        <div class="arch-title">智能投研</div>
+                        <div class="arch-desc">财报自动解析 · 行业研报摘要 · 舆情情感分析 · 智能问答系统 · 投资标的筛选</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">应用方向</div>
+                        <div class="arch-title">量化策略</div>
+                        <div class="arch-desc">因子挖掘 · 策略回测 · 组合优化 · 风险归因 · Alpha信号生成 · 市场微观结构</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">应用方向</div>
+                        <div class="arch-title">风险管理</div>
+                        <div class="arch-desc">信用评分 · 欺诈检测 · 压力测试 · 异常预警 · 违约预测 · VaR与ES建模</div>
+                    </div>
+                </div>
+                <div class="tech-grid" style="margin-top: 14px;">
+                    <div class="tech-card">
+                        <div class="tech-card-title">大模型应用</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">Prompt Engineering</span>
+                            <span class="tech-tag">RAG检索增强</span>
+                            <span class="tech-tag">LangChain</span>
+                            <span class="tech-tag">Fine-tuning</span>
+                            <span class="tech-tag">Agent</span>
+                            <span class="tech-tag">Function Calling</span>
+                        </div>
+                    </div>
+                    <div class="tech-card">
+                        <div class="tech-card-title">金融数据源</div>
+                        <div class="tech-tags">
+                            <span class="tech-tag">Tushare</span>
+                            <span class="tech-tag">AKShare</span>
+                            <span class="tech-tag">Wind</span>
+                            <span class="tech-tag">Bloomberg</span>
+                            <span class="tech-tag">Yahoo Finance</span>
+                            <span class="tech-tag">东方财富</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="paragraph" style="margin-top: 20px;"><strong>学习成果：</strong>已完成多个AI金融原型项目，包括基于大模型的财报智能分析助手、量化策略回测框架、风险预警系统。具备将前沿AI技术落地为可用金融工具的端到端能力，让技术真正服务于决策。</p>`
+            }
+        ]
+    },
+
+    project: {
+        title: '项目 · 实战成果展列',
+        nav: [
+            { icon: 'code', label: 'AI量化' },
+            { icon: 'chart', label: '数据分析' },
+            { icon: 'brain', label: '智能应用' },
+            { icon: 'layers', label: '综合实战' }
+        ],
+        content: [
+            {
+                title: 'AI量化',
+                subtitle: 'AI QUANTITATIVE PROJECTS',
+                body: `<div class="project-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">量化策略回测框架</div>
+                        </div>
+                        <span class="project-tag">Python · Pandas</span>
+                    </div>
+                    <ul class="project-points">
+                        <li class="project-point">构建模块化量化回测引擎，支持自定义策略、多周期回测、滑点与手续费模拟</li>
+                        <li class="project-point">实现因子计算库，覆盖动量、估值、质量、波动率等50+常用因子</li>
+                        <li class="project-point">集成夏普比率、最大回撤、Sortino比率、Calmar比率等专业绩效指标</li>
+                        <li class="project-point">支持多标的组合回测、动态仓位管理、风险平价配置策略</li>
+                        <li class="project-point">输出可视化报告：净值曲线、回撤序列、月度收益热力图、因子暴露分析</li>
+                    </ul>
+                </div>
+                <div class="project-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">多因子选股模型</div>
+                        </div>
+                        <span class="project-tag">机器学习 · XGBoost</span>
+                    </div>
+                    <ul class="project-points">
+                        <li class="project-point">构建多因子选股框架，融合基本面因子与技术面因子，覆盖沪深300成分股</li>
+                        <li class="project-point">使用XGBoost模型进行因子合成与收益预测，IC均值达0.05以上</li>
+                        <li class="project-point">实现因子中性化处理：行业中性化、市值中性化、正交化去冗余</li>
+                        <li class="project-point">分层回测显示Top组年化超额收益显著优于Bottom组</li>
+                        <li class="project-point">支持因子衰减分析、因子拥挤度监控、动态权重调整</li>
+                    </ul>
+                </div>`
+            },
+            {
+                title: '数据分析',
+                subtitle: 'DATA ANALYSIS PROJECTS',
+                body: `<div class="project-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">企业财务健康度诊断系统</div>
+                        </div>
+                        <span class="project-tag">Python · 可视化</span>
+                    </div>
+                    <ul class="project-points">
+                        <li class="project-point">自动化解析上市公司财报数据，构建四维分析模型：盈利、偿债、运营、成长</li>
+                        <li class="project-point">实现杜邦分析三因素分解，追溯ROE变动根源至经营杠杆与财务杠杆</li>
+                        <li class="project-point">生成可视化诊断报告：雷达图、趋势线、同行业对标、Z-Score破产预警</li>
+                        <li class="project-point">支持多年度对比分析、同行横向排名、行业百分位评估</li>
+                        <li class="project-point">集成现金流质量评分模型，识别盈利质量与盈余管理迹象</li>
+                    </ul>
+                </div>
+                <div class="project-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">宏观经济数据看板</div>
+                        </div>
+                        <span class="project-tag">数据可视化 · Plotly</span>
+                    </div>
+                    <ul class="project-points">
+                        <li class="project-point">整合GDP、CPI、PPI、PMI、社融、M2等核心宏观指标数据流</li>
+                        <li class="project-point">构建交互式数据看板，支持时间窗口切换、指标叠加对比、周期分析</li>
+                        <li class="project-point">实现宏观景气度评分模型，综合12项领先指标预判经济周期拐点</li>
+                        <li class="project-point">集成利率期限结构可视化，识别收益率曲线倒挂等衰退信号</li>
+                        <li class="project-point">支持自定义指标组合与预警阈值设置，自动推送异动提醒</li>
+                    </ul>
+                </div>`
+            },
+            {
+                title: '智能应用',
+                subtitle: 'AI APPLICATION PROJECTS',
+                body: `<div class="project-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">大模型财报分析助手</div>
+                        </div>
+                        <span class="project-tag">LLM · RAG · LangChain</span>
+                    </div>
+                    <ul class="project-points">
+                        <li class="project-point">基于大模型构建智能投研助手，支持自然语言交互式财报问答</li>
+                        <li class="project-point">采用RAG架构，将财报原文向量化存储，实现精准信息检索与引用</li>
+                        <li class="project-point">支持多文档对比分析：「对比A公司与B公司毛利率差异及原因」</li>
+                        <li class="project-point">自动生成结构化分析报告：经营概览、风险提示、亮点提炼、趋势预判</li>
+                        <li class="project-point">集成Function Calling能力，可调用财务计算工具进行估值与比率分析</li>
+                    </ul>
+                </div>
+                <div class="project-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">智能风控预警系统</div>
+                        </div>
+                        <span class="project-tag">ML · 异常检测</span>
+                    </div>
+                    <ul class="project-points">
+                        <li class="project-point">构建信贷风险评分模型，融合客户画像、行为数据、征信特征多维信息</li>
+                        <li class="project-point">实现欺诈检测引擎，基于孤立森林与自编码器识别异常交易模式</li>
+                        <li class="project-point">开发压力测试模块，模拟极端市场场景下的组合损失分布</li>
+                        <li class="project-point">集成实时监控看板，对风险指标超阈值事件自动预警与推送</li>
+                        <li class="project-point">支持模型解释性分析：SHAP值归因、特征重要性排序、决策路径可视化</li>
+                    </ul>
+                </div>`
+            },
+            {
+                title: '综合实战',
+                subtitle: 'COMPREHENSIVE PRACTICE',
+                body: `<div class="project-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">个人金融终端（本项目）</div>
+                        </div>
+                        <span class="project-tag">全栈 · 综合集成</span>
+                    </div>
+                    <ul class="project-points">
+                        <li class="project-point">独立设计开发个人金融终端网站，融合品牌视觉、交互动效与数据展示</li>
+                        <li class="project-point">前端采用原生HTML/CSS/JavaScript，Canvas绘制三层景深背景与粒子系统</li>
+                        <li class="project-point">构建模块化弹窗系统，支持档案、学业、项目、资质、知识、观察六大模块</li>
+                        <li class="project-point">集成实时时钟、行情滚动栏、迷你K线图表等金融终端风格组件</li>
+                        <li class="project-point">响应式设计适配多端访问，交互细节打磨至像素级精度</li>
+                    </ul>
+                </div>
+                <div class="project-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">精算定价原型系统</div>
+                        </div>
+                        <span class="project-tag">精算 · Python</span>
+                    </div>
+                    <ul class="project-points">
+                        <li class="project-point">构建寿险产品精算定价原型，支持定期寿险、终身寿险、年金险多险种</li>
+                        <li class="project-point">实现生命表加载与换算函数计算，支持选择表与终极表切换</li>
+                        <li class="project-point">完成净保费、毛保费、准备金全链路计算，支持多假设敏感性分析</li>
+                        <li class="project-point">集成利润测试模块，模拟不同情景下产品盈利能力与资本需求</li>
+                        <li class="project-point">输出精算报告：定价假设、现金流表、利润演示、敏感性矩阵</li>
+                    </ul>
+                </div>`
+            }
+        ]
+    },
+
+    cert: {
+        title: '资质 · 能力认证档案',
+        nav: [
+            { icon: 'award', label: '专业资质' },
+            { icon: 'code', label: '技术认证' },
+            { icon: 'star', label: '综合能力' }
+        ],
+        content: [
+            {
+                title: '专业资质',
+                subtitle: 'PROFESSIONAL QUALIFICATIONS',
+                body: `<div class="cert-card">
+                    <div class="cert-icon"><svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg></div>
+                    <div class="cert-info">
+                        <div class="cert-title">会计专业技术资格</div>
+                        <div class="cert-meta">专业阶段 · 持续进阶中</div>
+                        <div class="cert-desc">系统掌握会计学原理、财务会计、财务管理、成本管理、税法与经济法核心知识体系。具备独立完成企业账务处理、报表编制与财务分析的专业能力，构建扎实的商业语言基础。</div>
+                    </div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+                    <div class="cert-info">
+                        <div class="cert-title">精算师考试体系</div>
+                        <div class="cert-meta">数理基础阶段 · 持续推进</div>
+                        <div class="cert-desc">深入精算数学、概率统计、利息理论、风险模型等核心科目。构建将不确定性转化为可量化决策的精算思维，掌握寿险精算与非寿险精算的基础方法论与计算体系。</div>
+                    </div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+                    <div class="cert-info">
+                        <div class="cert-title">金融风险管理学习</div>
+                        <div class="cert-meta">FRM知识体系 · 系统学习</div>
+                        <div class="cert-desc">掌握市场风险、信用风险、操作风险、流动性风险的量化与管理框架。熟悉VaR、ES、压力测试等风险度量方法，构建巴塞尔协议监管框架下的全面风险管理认知。</div>
+                    </div>
+                </div>`
+            },
+            {
+                title: '技术认证',
+                subtitle: 'TECHNICAL CERTIFICATIONS',
+                body: `<div class="cert-card">
+                    <div class="cert-icon"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div>
+                    <div class="cert-info">
+                        <div class="cert-title">Python编程能力认证</div>
+                        <div class="cert-meta">系统学习 · 项目实战</div>
+                        <div class="cert-desc">系统掌握Python基础语法、面向对象编程、数据结构与算法。熟练运用NumPy、Pandas、Matplotlib等数据科学工具栈，具备独立开发数据分析与自动化脚本的能力。</div>
+                    </div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+                    <div class="cert-info">
+                        <div class="cert-title">机器学习专项学习</div>
+                        <div class="cert-meta">系统课程 · 实战项目</div>
+                        <div class="cert-desc">系统学习监督学习、无监督学习、特征工程、模型评估与调优全流程。掌握回归、分类、聚类、集成学习等核心算法，具备将业务问题转化为机器学习任务的端到端能力。</div>
+                    </div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+                    <div class="cert-info">
+                        <div class="cert-title">大模型应用开发认证</div>
+                        <div class="cert-meta">前沿技术 · 持续跟进</div>
+                        <div class="cert-desc">掌握Prompt Engineering、RAG检索增强、LangChain应用开发、Agent构建等大模型应用核心技术。具备将LLM能力集成到金融分析、投研助手、智能问答等实际场景的工程化能力。</div>
+                    </div>
+                </div>`
+            },
+            {
+                title: '综合能力',
+                subtitle: 'COMPREHENSIVE COMPETENCIES',
+                body: `<div class="cert-card">
+                    <div class="cert-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                    <div class="cert-info">
+                        <div class="cert-title">跨领域融合能力</div>
+                        <div class="cert-meta">复合型核心竞争力</div>
+                        <div class="cert-desc">能够将财会业务理解、精算数理建模、AI技术开发三者有机融合，在交叉地带发现新机会、创造新价值。这种「业务+数理+技术」的三角能力结构是应对金融数字化转型的核心壁垒。</div>
+                    </div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-icon"><svg viewBox="0 0 24 24"><path d="M9 11H1l3-3-3-3M1 11h8M15 13h8l-3 3 3 3M23 13h-8"/></svg></div>
+                    <div class="cert-info">
+                        <div class="cert-title">系统化思维</div>
+                        <div class="cert-meta">方法论核心能力</div>
+                        <div class="cert-desc">具备从全局视角拆解复杂问题的能力：识别系统结构、理清因果链条、定位关键杠杆点。能够将碎片信息整合为体系认知，将模糊需求转化为可执行方案，将单点突破升级为系统解决。</div>
+                    </div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+                    <div class="cert-info">
+                        <div class="cert-title">长期主义执行力</div>
+                        <div class="cert-meta">持续精进 · 深度沉淀</div>
+                        <div class="cert-desc">以复利思维驱动日常行动，将宏大目标分解为可持续的微小进步。在无人监督时保持节奏，在短期无果时坚持投入，用时间厚度积累专业深度，让每一份努力具备长期复利价值。</div>
+                    </div>
+                </div>`
+            }
+        ]
+    },
+
+    knowledge: {
+        title: '知识 · 认知图谱网络',
+        nav: [
+            { icon: 'book', label: '金融财会' },
+            { icon: 'calc', label: '数理统计' },
+            { icon: 'code', label: '编程技术' },
+            { icon: 'brain', label: '前沿洞察' }
+        ],
+        content: [
+            {
+                title: '金融财会',
+                subtitle: 'FINANCE & ACCOUNTING',
+                body: `<div class="knowledge-grid">
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+                        <div class="knowledge-title">财务报表分析</div>
+                        <div class="knowledge-desc">资产负债表 · 利润表 · 现金流量表 · 所有者权益变动表 · 附注解读 · 三表勾稽 · 杜邦分析 · Z-Score预警</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+                        <div class="knowledge-title">公司金融</div>
+                        <div class="knowledge-desc">资本结构 · WACC · CAPM · 投资决策 · 股利政策 · 并购重组 · 企业估值 · DCF/DDM/相对估值</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+                        <div class="knowledge-title">管理会计</div>
+                        <div class="knowledge-desc">本量利分析 · 标准成本 · 作业成本法 · 平衡计分卡 · 预算管理 · 转移定价 · 绩效评价体系</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+                        <div class="knowledge-title">审计与内控</div>
+                        <div class="knowledge-desc">审计准则 · 审计程序 · 内控框架COSO · 风险评估 · 实质性程序 · 审计报告 · 内审与外审</div>
+                    </div>
+                </div>`
+            },
+            {
+                title: '数理统计',
+                subtitle: 'MATHEMATICS & STATISTICS',
+                body: `<div class="knowledge-grid">
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg></div>
+                        <div class="knowledge-title">概率论</div>
+                        <div class="knowledge-desc">随机变量 · 概率分布 · 条件概率 · 贝叶斯 · 大数定律 · 中心极限定理 · 矩母函数 · 极限理论</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M9 11H1l3-3-3-3M1 11h8M15 13h8l-3 3 3 3M23 13h-8"/></svg></div>
+                        <div class="knowledge-title">数理统计</div>
+                        <div class="knowledge-desc">参数估计 · 假设检验 · 置信区间 · 回归分析 · 方差分析 · 非参数统计 · 贝叶斯推断</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+                        <div class="knowledge-title">利息理论</div>
+                        <div class="knowledge-desc">单利复利 · 现值终值 · 年金 · 收益率 · 债券定价 · 久期凸性 · 免疫策略 · 利率期限结构</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg></div>
+                        <div class="knowledge-title">精算数学</div>
+                        <div class="knowledge-desc">生存模型 · 生命表 · 换算函数 · 净保费 · 毛保费 · 准备金 · 现金价值 · 红利分配 · 利润测试</div>
+                    </div>
+                </div>`
+            },
+            {
+                title: '编程技术',
+                subtitle: 'PROGRAMMING & TECHNOLOGY',
+                body: `<div class="knowledge-grid">
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div>
+                        <div class="knowledge-title">Python开发</div>
+                        <div class="knowledge-desc">基础语法 · 面向对象 · 装饰器生成器 · 异步编程 · 文件操作 · 正则表达式 · 单元测试 · 性能优化</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg></div>
+                        <div class="knowledge-title">数据科学</div>
+                        <div class="knowledge-desc">NumPy · Pandas · Matplotlib · Seaborn · Plotly · SciPy · 特征工程 · 数据清洗 · 可视化设计</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+                        <div class="knowledge-title">机器学习</div>
+                        <div class="knowledge-desc">线性回归 · 逻辑回归 · 决策树 · 随机森林 · XGBoost · K-Means · 神经网络 · 模型评估 · 超参调优</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+                        <div class="knowledge-title">工程化实践</div>
+                        <div class="knowledge-desc">Git版本管理 · Docker容器化 · Linux运维 · REST API · Flask/Streamlit · 数据库SQL · CI/CD流程</div>
+                    </div>
+                </div>`
+            },
+            {
+                title: '前沿洞察',
+                subtitle: 'FRONTIER INSIGHTS',
+                body: `<div class="knowledge-grid">
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div>
+                        <div class="knowledge-title">大模型应用</div>
+                        <div class="knowledge-desc">Prompt工程 · RAG检索增强 · LangChain · Agent · Fine-tuning · Function Calling · 多模态 · 金融垂直应用</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+                        <div class="knowledge-title">量化投资</div>
+                        <div class="knowledge-desc">因子模型 · Alpha策略 · 统计套利 · 高频交易 · 组合优化 · 风险归因 · 另类数据 · 市场微观结构</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+                        <div class="knowledge-title">风险管理</div>
+                        <div class="knowledge-desc">VaR/ES · 压力测试 · 信用评分 · 欺诈检测 · 巴塞尔协议 · 反洗钱 · 流动性风险 · 操作风险</div>
+                    </div>
+                    <div class="knowledge-card">
+                        <div class="knowledge-icon"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                        <div class="knowledge-title">行业研究</div>
+                        <div class="knowledge-desc">行业分析框架 · 竞争格局 · 产业链拆解 · 商业模式 · 财务对标 · 估值方法 · 趋势研判 · 投资逻辑</div>
+                    </div>
+                </div>`
+            }
+        ]
+    },
+
+    observation: {
+        title: '观察 · 趋势洞察日志',
+        nav: [
+            { icon: 'eye', label: 'AI与金融' },
+            { icon: 'chart', label: '量化思考' },
+            { icon: 'star', label: '长期主义' },
+            { icon: 'layers', label: '行业趋势' }
+        ],
+        content: [
+            {
+                title: 'AI与金融',
+                subtitle: 'AI & FINANCE',
+                body: `<p class="paragraph"><strong>AI不会取代金融从业者，但会取代不使用AI的从业者。</strong>大模型的价值不在于替代专业判断，而在于扩展认知带宽——让人从重复性劳动中解放，专注于更高维度的战略思考与创造性决策。</p>
+                <p class="paragraph">当前AI在金融领域的落地呈现三个层次：第一层是效率工具，如财报自动提取、研报摘要生成，解决信息处理效率问题；第二层是分析增强，如多因子信号挖掘、舆情情感分析，提升分析深度与广度；第三层是决策辅助，如智能投研助手、风险预警Agent，直接参与决策流程。</p>
+                <p class="paragraph">值得关注的是，AI在金融场景的应用面临独特的挑战：数据质量与合规要求、模型可解释性与监管透明度、幻觉风险与决策可信度。真正有价值的AI金融应用，不是简单堆砌技术，而是在深刻理解业务逻辑的基础上，找到技术与场景的最佳契合点。</p>
+                <div class="arch-grid" style="margin-top: 20px;">
+                    <div class="arch-card">
+                        <div class="arch-layer">趋势一</div>
+                        <div class="arch-title">效率工具化</div>
+                        <div class="arch-desc">AI将成为每个金融从业者的标配工具，如同Excel一样普及</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">趋势二</div>
+                        <div class="arch-title">分析智能化</div>
+                        <div class="arch-desc">从描述性分析到预测性建模，从单维度到多模态融合</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">趋势三</div>
+                        <div class="arch-title">决策Agent化</div>
+                        <div class="arch-desc">AI Agent将自主完成多步骤分析任务，人机协作成为主流</div>
+                    </div>
+                </div>`
+            },
+            {
+                title: '量化思考',
+                subtitle: 'QUANTITATIVE THINKING',
+                body: `<p class="paragraph"><strong>量化的本质不是追求精确，而是管理不确定性。</strong>模型永远是对现实的近似，而非现实本身。真正优秀的量化实践者，既相信模型的力量，又警惕模型的局限——在模型有效时充分利用，在模型失效时及时识别。</p>
+                <p class="paragraph">因子投资的流行反映了市场从「定性叙事」向「定量归因」的进化趋势。但因子拥挤也带来新风险：当所有人都使用相同因子，超额收益就会被套利殆尽。未来的Alpha来源将更加隐蔽——可能在另类数据中，可能在非传统因子组合中，也可能在人机协作的边界地带。</p>
+                <p class="paragraph">回测是量化的基础工具，也是最大的陷阱。过拟合、前视偏差、生存偏差、交易成本忽略——每一个都足以让看似亮眼的策略在实盘中失效。严谨的回测应该包含样本外验证、参数敏感性分析、多重检验校正，以及最重要的一步：理解策略背后的经济学逻辑，而非仅依赖统计显著性。</p>
+                <p class="paragraph">量化思维的价值远不止于投资。它是一种将模糊问题结构化、将直觉判断显性化、将经验知识模型化的思维方式。无论是企业估值、风险定价还是战略决策，量化思维都能帮助我们在不确定性中寻找确定性的决策依据。</p>`
+            },
+            {
+                title: '长期主义',
+                subtitle: 'LONG-TERMISM',
+                body: `<p class="paragraph"><strong>短期看，市场是投票机；长期看，市场是称重机。</strong>格雷厄姆这句话揭示了投资的本质——短期价格由情绪驱动，长期价值由基本面决定。这一逻辑不仅适用于投资，也适用于个人成长。</p>
+                <p class="paragraph">在技能学习上，长期主义意味着不追求即时回报，而追求深层理解。学一个工具的API只需一天，理解其设计哲学需要一周，融会贯通到能创造性运用需要数月。浅层学习容易复制，深层掌握形成壁垒。当别人在追逐新框架时，你已经在底层原理上构建了迁移能力。</p>
+                <p class="paragraph">在职业发展上，长期主义意味着不追求职位晋升的速度，而追求能力积累的厚度。每一次跳槽带来的薪资涨幅终将趋缓，但复合能力的积累会产生复利效应。在25岁构建的能力体系，会在35岁产生指数级回报——前提是这些能力是独特的、可迁移的、难以被替代的。</p>
+                <p class="paragraph">长期主义最难的不是「选择长期」，而是在短期没有反馈时「坚持长期」。人的天性偏好即时反馈，而真正有价值的积累往往需要经历漫长的「高原期」。在高原期保持信念、在暗夜中持续前行，这才是长期主义真正的门槛——它不是认知问题，而是执行问题。</p>
+                <div class="arch-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 20px;">
+                    <div class="arch-card">
+                        <div class="arch-layer">认知层</div>
+                        <div class="arch-title">方向选择</div>
+                        <div class="arch-desc">选择有长期价值的赛道，做时间的朋友而非对手</div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-layer">执行层</div>
+                        <div class="arch-title">持续投入</div>
+                        <div class="arch-desc">在没有即时反馈时依然保持节奏与定力</div>
+                    </div>
+                </div>`
+            },
+            {
+                title: '行业趋势',
+                subtitle: 'INDUSTRY TRENDS',
+                body: `<p class="paragraph"><strong>金融行业的数字化转型正在从「锦上添花」走向「生死攸关」。</strong>传统金融机构面临双重压力：一方面是FinTech公司的降维打击，另一方面是客户对数字化体验的日益增长期待。不转型的终将被淘汰，转型不当的同样会被淘汰。</p>
+                <p class="paragraph">从人才需求看，市场对「金融+技术」复合型人才的需求远超单一背景人才。纯金融背景者懂业务但缺技术手段，纯技术背景者会编程但不懂业务逻辑。能在两者之间架起桥梁的人才，将成为行业最稀缺的资源。这正是「财会+精算+AI」三维能力的价值所在。</p>
+                <p class="paragraph">从技术演进看，大模型的出现正在重塑知识工作的边界。曾经需要初级分析师花费数小时完成的财报阅读、数据整理、报告撰写，现在AI可以在分钟级完成。这意味着未来的价值重心将从「信息处理」上移至「判断决策」——能用AI放大产出的人，将获得不成比例的回报。</p>
+                <p class="paragraph">从监管趋势看，巴塞尔协议III的深化实施、数据安全法的落地、ESG披露要求的推广，都在推动金融机构对风险管理与数据治理的投入。这为兼具金融理解与技术能力的从业者创造了大量机会——监管要求越复杂，对能将合规要求转化为技术实现的人才需求就越大。</p>
+                <p class="paragraph">面向未来，最具竞争力的人才画像将是：既懂金融业务本质，又掌握AI技术工具，同时具备系统化思维与长期主义定力的「T型+π型」复合人才。在深度上扎根一个领域，在广度上跨越多个学科，在交叉地带创造独特价值。</p>`
+            }
+        ]
+    },
+
+    adjutant: {
+        title: '副官 · 智能对话终端',
+        nav: [
+            { icon: 'message', label: '对话' }
+        ],
+        content: [
+            {
+                title: '智能副官',
+                subtitle: 'AI ADJUTANT',
+                body: `<div class="adjutant-body" id="adjutantBody">
+                    <div class="adjutant-sidebar">
+                        <div class="adjutant-portrait">
+                            <span class="adjutant-portrait-text">凯</span>
+                        </div>
+                        <div class="adjutant-name">副官 · KAI</div>
+                        <div class="adjutant-role">AI ASSISTANT · v1.0</div>
+                        <div class="adjutant-status">
+                            <span class="status-dot-small"></span>
+                            <span>ONLINE</span>
+                        </div>
+                    </div>
+                    <div class="adjutant-chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message adjutant">
+                                <div class="message-avatar">K</div>
+                                <div class="message-bubble">你好，我是副官KAI。我可以为你介绍魏凯的能力体系、项目经历与成长思考。试试问我：「魏凯的核心能力是什么？」「有哪些项目成果？」「成长信条是什么？」</div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <textarea class="chat-input" id="chatInput" placeholder="输入你的问题..." rows="1"></textarea>
+                            <div class="send-btn" id="sendBtn" onclick="sendMessage()">
+                                <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>`
+            }
+        ]
+    }
+};
+
+/* ========== 6. 图标SVG映射 ========== */
+const iconSvgMap = {
+    target: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+    star: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    layers: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
+    user: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    clock: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    book: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+    calc: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="16" y1="18" x2="16" y2="18"/></svg>',
+    code: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+    brain: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3 3 3 0 0 0-3 3 3 3 0 0 0 0 6 3 3 0 0 0 3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0 3-3 3 3 0 0 0 0-6 3 3 0 0 0-3-3 3 3 0 0 0-3-3z"/></svg>',
+    chart: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>',
+    award: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>',
+    eye: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    message: '<svg class="modal-nav-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+};
+
+/* ========== 7. 弹窗控制 ========== */
+let currentModule = null;
+let currentNavIndex = 0;
+
+function openModal(moduleKey, navIndex) {
+    const data = modalData[moduleKey];
+    if (!data) return;
+
+    currentModule = moduleKey;
+    currentNavIndex = navIndex || 0;
+
+    document.getElementById('modalTitle').textContent = data.title;
+
+    const body = document.getElementById('modalBody');
+    body.innerHTML = '';
+
+    if (moduleKey === 'adjutant') {
+        body.innerHTML = data.content[0].body;
+        body.className = 'modal-body adjutant-mode';
+        initChatSystem();
+    } else {
+        body.className = 'modal-body';
+
+        const sidebar = document.createElement('div');
+        sidebar.className = 'modal-sidebar';
+        sidebar.innerHTML = '<div class="modal-sidebar-title">NAVIGATION</div>';
+
+        const navList = document.createElement('ul');
+        navList.className = 'modal-nav-list';
+
+        data.nav.forEach((item, i) => {
+            const navItem = document.createElement('li');
+            navItem.className = 'modal-nav-item' + (i === currentNavIndex ? ' active' : '');
+            navItem.innerHTML = (iconSvgMap[item.icon] || '') + '<span>' + item.label + '</span>';
+            navItem.onclick = function() { switchNav(i); };
+            navList.appendChild(navItem);
+        });
+
+        sidebar.appendChild(navList);
+
+        const contentArea = document.createElement('div');
+        contentArea.className = 'modal-content';
+
+        data.content.forEach((section, i) => {
+            const sectionEl = document.createElement('div');
+            sectionEl.className = 'content-section' + (i === currentNavIndex ? ' active' : '');
+            sectionEl.innerHTML = '<div class="content-title">' + section.title + '</div>' +
+                '<div class="content-subtitle">' + section.subtitle + '</div>' +
+                '<div class="content-divider"></div>' +
+                section.body;
+            contentArea.appendChild(sectionEl);
+        });
+
+        body.appendChild(sidebar);
+        body.appendChild(contentArea);
+    }
+
+    document.getElementById('modalOverlay').classList.add('active');
+    document.getElementById('modalWindow').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+    document.getElementById('modalWindow').classList.remove('active');
+}
+
+function switchNav(index) {
+    if (!currentModule) return;
+    currentNavIndex = index;
+
+    const navItems = document.querySelectorAll('.modal-nav-item');
+    navItems.forEach((item, i) => {
+        item.classList.toggle('active', i === index);
+    });
+
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach((section, i) => {
+        section.classList.toggle('active', i === index);
+    });
+
+    const contentArea = document.querySelector('.modal-content');
+    if (contentArea) contentArea.scrollTop = 0;
+}
+
+/* ========== 8. 副官对话系统 ========== */
+const adjutantKnowledge = {
+    '核心能力': '魏凯的核心能力体系是「财会落地+精算数理+AI量化」三维架构。基底层是完整的会计核算与财务分析能力；核心层是精算数理与风险建模能力；拓展层是Python编程、机器学习与大模型应用能力。三者融合形成不可替代的复合竞争力。',
+    '成长信条': '魏凯的成长信条是「复利是世界第八大奇迹，深度沉淀是唯一长期捷径」。坚持长期主义，不急求速成、不盲从热门赛道，以知行合一驱动持续迭代，用时间的厚度积累专业的深度。',
+    '项目': '魏凯已完成多个实战项目，包括：量化策略回测框架、多因子选股模型、企业财务健康度诊断系统、宏观经济数据看板、大模型财报分析助手、智能风控预警系统、精算定价原型系统，以及这个个人金融终端网站本身。',
+    '学业': '魏凯的系统学习覆盖四大领域：财会体系（会计学原理、中级财务会计、财务管理、成本与管理会计、审计、税法）、精算数理（概率论、数理统计、利息理论、精算数学、风险模型）、编程开发（Python、数据科学栈、机器学习、工程化工具）、AI金融（智能投研、量化策略、风险管理、大模型应用）。',
+    '资质': '魏凯的专业资质包括会计专业技术资格、精算师考试体系学习、金融风险管理FRM知识体系。技术认证涵盖Python编程、机器学习专项、大模型应用开发。综合能力包括跨领域融合、系统化思维与长期主义执行力。',
+    '知识': '魏凯的知识图谱覆盖金融财会（财务报表分析、公司金融、管理会计、审计内控）、数理统计（概率论、数理统计、利息理论、精算数学）、编程技术（Python开发、数据科学、机器学习、工程化实践）、前沿洞察（大模型应用、量化投资、风险管理、行业研究）四大板块。',
+    '观察': '魏凯的行业观察聚焦四个方向：AI与金融的融合趋势（从效率工具到决策Agent）、量化投资的本质思考（管理不确定性而非追求精确）、长期主义的实践哲学（方向选择与持续投入）、金融行业数字化转型趋势（复合型人才成为稀缺资源）。',
+    '定位': '魏凯是跨领域复合型金融学习者，长期主义践行者。以「会计为基、精算为骨、AI为翼」为核心方法论，在传统金融与前沿科技的交汇地带构建独特竞争力。',
+    '你好': '你好！我是副官KAI。你可以问我关于魏凯的任何问题——核心能力、项目经历、成长信条、学业体系等。试试问「核心能力是什么？」',
+    '联系方式': '欢迎通过本网站了解魏凯的能力体系与成长思考。如需进一步交流，请通过网站相关信息渠道联系。'
+};
+
+function initChatSystem() {
+    const input = document.getElementById('chatInput');
+    if (!input) return;
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    input.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 90) + 'px';
+    });
+}
+
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const messages = document.getElementById('chatMessages');
+    if (!input || !messages) return;
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    const userMsg = document.createElement('div');
+    userMsg.className = 'message user';
+    userMsg.innerHTML = '<div class="message-avatar">我</div><div class="message-bubble">' + escapeHtml(text) + '</div>';
+    messages.appendChild(userMsg);
+
+    input.value = '';
+    input.style.height = 'auto';
+
+    messages.scrollTop = messages.scrollHeight;
+
+    setTimeout(function() {
+        const typingEl = document.createElement('div');
+        typingEl.className = 'message adjutant';
+        typingEl.innerHTML = '<div class="message-avatar">K</div><div class="message-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
+        messages.appendChild(typingEl);
+        messages.scrollTop = messages.scrollHeight;
+
+        setTimeout(function() {
+            typingEl.querySelector('.message-bubble').innerHTML = getAdjutantReply(text);
+            messages.scrollTop = messages.scrollHeight;
+        }, 800);
+    }, 300);
+}
+
+function getAdjutantReply(question) {
+    const q = question.toLowerCase();
+
+    if (q.includes('核心') || q.includes('能力') || q.includes('定位')) return adjutantKnowledge['核心能力'];
+    if (q.includes('信条') || q.includes('理念') || q.includes('哲学')) return adjutantKnowledge['成长信条'];
+    if (q.includes('项目') || q.includes('作品') || q.includes('实战')) return adjutantKnowledge['项目'];
+    if (q.includes('学业') || q.includes('学习') || q.includes('课程')) return adjutantKnowledge['学业'];
+    if (q.includes('资质') || q.includes('证书') || q.includes('认证')) return adjutantKnowledge['资质'];
+    if (q.includes('知识') || q.includes('图谱') || q.includes('体系')) return adjutantKnowledge['知识'];
+    if (q.includes('观察') || q.includes('趋势') || q.includes('行业') || q.includes('观点')) return adjutantKnowledge['观察'];
+    if (q.includes('你好') || q.includes('hello') || q.includes('hi')) return adjutantKnowledge['你好'];
+    if (q.includes('联系') || q.includes('方式') || q.includes('邮箱')) return adjutantKnowledge['联系方式'];
+    if (q.includes('是谁') || q.includes('介绍') || q.includes('定位')) return adjutantKnowledge['定位'];
+
+    return '这是一个很好的问题。你可以尝试问我关于魏凯的「核心能力」「项目经历」「成长信条」「学业体系」「资质认证」「知识图谱」或「行业观察」，我会为你详细介绍。';
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+/* ========== 9. 弹窗拖拽 ========== */
+(function initModalDrag() {
+    const header = document.getElementById('modalHeader');
+    const window_el = document.getElementById('modalWindow');
+    if (!header || !window_el) return;
+
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+
+    header.addEventListener('mousedown', function(e) {
+        if (e.target.classList.contains('modal-dot')) return;
+        isDragging = true;
+        const rect = window_el.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = rect.left;
+        startTop = rect.top;
+        window_el.style.transition = 'none';
+        header.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        window_el.style.left = (startLeft + dx + window_el.offsetWidth / 2) + 'px';
+        window_el.style.top = (startTop + dy + window_el.offsetHeight / 2) + 'px';
+        window_el.style.transform = 'translate(-50%, -50%)';
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            window_el.style.transition = '';
+            header.style.cursor = 'move';
+        }
+    });
+})();
+
+/* ========== 10. 音乐控制与字幕系统 ========== */
+(function initMusicAndSubtitle() {
+    const musicBtn = document.getElementById('musicBtn');
+    const audio = document.getElementById('bgMusic');
+    const subtitlePanel = document.getElementById('subtitlePanel');
+    const subtitleToggle = document.getElementById('subtitleToggle');
+    const subtitleText = document.getElementById('subtitleText');
+
+    if (!musicBtn || !audio) return;
+
+    // 字幕原文
+    const subtitles = [
+        '天阔以昭君仁，地厚以载臣德。',
+        '恩惠以恤余民，勤政以阜人财。',
+        '君王当察群下之言，以广聪明之烈。',
+        '忍威烈以赦盛德，宥贤才以敦大业。',
+        '夫国之有民，犹水之有舟，停则以安，扰则以危。',
+        '治疾及其未笃，除患贵其未深。'
+    ];
+
+    let subtitleIndex = 0;
+    let subtitleTimer = null;
+
+    // 字幕切换函数
+    function switchSubtitle() {
+        if (!subtitleText) return;
+        subtitleText.classList.add('leaving');
+        setTimeout(function() {
+            subtitleIndex = (subtitleIndex + 1) % subtitles.length;
+            subtitleText.textContent = subtitles[subtitleIndex];
+            subtitleText.classList.remove('leaving');
+            subtitleText.classList.add('active');
+        }, 600);
+    }
+
+    // 开始字幕轮播
+    function startSubtitles() {
+        if (subtitleTimer) clearInterval(subtitleTimer);
+        subtitleIndex = 0;
+        if (subtitleText) subtitleText.textContent = subtitles[0];
+        subtitleTimer = setInterval(switchSubtitle, 5000);
+    }
+
+    // 停止字幕轮播
+    function stopSubtitles() {
+        if (subtitleTimer) {
+            clearInterval(subtitleTimer);
+            subtitleTimer = null;
+        }
+    }
+
+    // 1.2秒后自动播放音乐
+    setTimeout(function() {
+        audio.volume = 0.35;
+        audio.play().then(function() {
+            musicBtn.classList.add('playing');
+            startSubtitles();
+        }).catch(function(e) {
+            // 浏览器自动播放策略阻止，等待用户点击
+        });
+    }, 1200);
+
+    // 点击切换播放/暂停
+    musicBtn.addEventListener('click', function() {
+        if (audio.paused) {
+            audio.volume = 0.35;
+            audio.play();
+            musicBtn.classList.add('playing');
+            startSubtitles();
+        } else {
+            audio.pause();
+            musicBtn.classList.remove('playing');
+            stopSubtitles();
+        }
+    });
+
+    // 字幕折叠按钮
+    if (subtitleToggle && subtitlePanel) {
+        subtitleToggle.addEventListener('click', function() {
+            subtitlePanel.classList.toggle('hidden');
+            try {
+                localStorage.setItem('subtitleHidden', subtitlePanel.classList.contains('hidden'));
+            } catch(e) {}
+        });
+
+        // 恢复字幕状态
+        try {
+            if (localStorage.getItem('subtitleHidden') === 'true') {
+                subtitlePanel.classList.add('hidden');
+            }
+        } catch(e) {}
+    }
+})();
+
+/* ========== 11. ESC关闭弹窗 ========== */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+</script>
+</body>
+</html>
