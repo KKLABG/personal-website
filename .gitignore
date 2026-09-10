@@ -6,8 +6,8 @@ Thumbs.db
 node_modules/
 **/node_modules/
 
-# 源码与临时物（站点只用根目录 /shiyun）
-vendor/
+# 源码与临时物（站点只用根目录 /shiyun；勿忽略 js/vendor）
+/vendor/
 .netlify/
 .netlify-publish/
 scripts/
