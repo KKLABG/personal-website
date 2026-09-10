@@ -1,8 +1,32 @@
-# 参考图片（不需要部署到线上）
+# 本地/系统
+.DS_Store
+Thumbs.db
+.env
+.env.*
+node_modules/
+**/node_modules/
+
+# 源码与临时物（站点只用根目录 /shiyun）
+vendor/
+.netlify/
+.netlify-publish/
+scripts/
+
+# 大体积源素材
+*.zip
+*.usdz
+*.fbx
+*.fbx.meta
+assets/models/kenney/
+assets/models/awing/a-wing-cockpit-version-2/
+A翼战机驾驶舱*.zip
 参考人像.png
 替代照片.png
 网页参考图.jpg
 
-# 系统文件
-.DS_Store
-Thumbs.db
+# 手势包 / 诗库（本站不用）
+shiyun/mediapipe-wasm/
+shiyun/mediapipe-vision.js
+shiyun/gesture_recognizer.task
+shiyun/gesture-worker.js
+shiyun/data/
