@@ -30,3 +30,6 @@ shiyun/mediapipe-vision.js
 shiyun/gesture_recognizer.task
 shiyun/gesture-worker.js
 shiyun/data/
+
+# 含完整个人信息的证书原件，勿入库
+assets/certs/*.original.jpg

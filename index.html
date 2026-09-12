@@ -675,6 +675,33 @@ body.inside .star-focus { display: block; animation: focusin 0.55s ease; }
 .tile { border-radius: 12px; padding: 10px; }
 .tile b { display: block; font-weight: 400; margin-bottom: 4px; }
 .tile p { color: var(--sub); font-size: 13px; }
+.proof {
+    margin: 12px 0 4px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(200, 230, 255, 0.16);
+    background: rgba(0, 0, 0, 0.28);
+}
+.proof img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 320px;
+    object-fit: contain;
+    background: #0a0f18;
+}
+.proof.qr img {
+    max-width: 220px;
+    max-height: 220px;
+    margin: 16px auto;
+}
+.proof figcaption {
+    padding: 8px 12px 10px;
+    color: var(--sub);
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+}
 
 .right h1, .chamber h4 { text-shadow: 0 4px 18px rgba(0,0,0,0.75); }
 .sanctum-call {
@@ -1177,17 +1204,16 @@ html.phone-land .turn-land { display: none !important; }
         <div class="hud">
             <aside class="col left">
                 <article class="hud-card paper" data-open="archive">
-                    <h2 class="en">THE FUTURE OF FINANCE</h2>
-                    <p class="lede">Accounting reads the past. Actuarial prices the risk. AI ships the product.</p>
+                    <h2 class="en">JUDGMENT · TASTE · DELIVERY</h2>
+                    <p class="lede">One idea. A hundred iterations. Ship it.</p>
                     <div class="paper-body">
                         <img src="assets/portrait.png" alt="魏凯">
                         <div>
-                            <p>魏凯，广东工业大学会计学，本科在读。以会计读懂生意，以精算给风险标价，以 AI 把想法做成能玩、能用的成品。</p>
+                            <p>魏凯，广东工业大学会计学 2028 届。会计出身、精算在学、AI 原生开发。擅长一件事：把想法迭代一百轮，推到能交付。</p>
                             <span class="sign en">Wei Kai</span>
                         </div>
                     </div>
-                </article>
-                <article class="hud-card market">
+                </article>                <article class="hud-card market">
                     <div class="kicker">MARKET OVERVIEW</div>
                     <div class="row"><span>SSE</span><b>3,124.04</b><span class="up">+0.32%</span></div>
                     <div class="row"><span>NASDAQ</span><b>16,987.21</b><span class="down">-0.08%</span></div>
@@ -1210,30 +1236,29 @@ html.phone-land .turn-land { display: none !important; }
 
             <section class="col mid">
                 <h1>魏凯 | <span class="en">Earth Online SSS</span>玩家终端</h1>
-                <p class="tag">以会计为基，精算为骨，AI为翼</p>
+                <p class="tag">判断与验收是新手艺 · 作品可验</p>
                 <div class="quad">
                     <article class="card hud-card" data-open="archive">
                         <svg class="ico" viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19V8"/></svg>
-                        <h3>会计×精算的底座</h3>
-                        <p>初级会计与准精算 102 已落地，精算数学正在路上。</p>
+                        <h3>品味在交付里</h3>
+                        <p>信息怎么排、节奏怎么走、访客愿不愿意点下一层——这是产品判断，不是简历排版。</p>
                     </article>
                     <article class="card hud-card" data-open="works">
                         <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l6 3"/></svg>
-                        <h3>用作品说话</h3>
-                        <p>多智能体可解释选股，实训营二等奖；四国争霸，微信小游戏体验版。</p>
+                        <h3>作品可验</h3>
+                        <p>多智能体选股二等奖；四国争霸体验版；这座 3D 终端。点开就能查、能玩、能追问。</p>
                     </article>
                     <article class="card hud-card" data-open="study">
                         <svg class="ico" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6L2 12l6 6"/></svg>
-                        <h3>会计 | 精算 | AI原生开发</h3>
-                        <p>先会判断，再会定价，再把想法做成成品。</p>
+                        <h3>跨学科底座</h3>
+                        <p>会计看懂生意，精算给风险标价，AI 把判断做成成品。顺序反了，只会更快地犯错。</p>
                     </article>
                     <article class="card hud-card" data-open="watch">
                         <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                         <h3>一个人，一支队伍</h3>
-                        <p>判断与验收是新手艺，长期主义是旧底色。</p>
+                        <p>AI 负责带宽，人负责判断与验收。说不清为什么在那里的代码，就重构或删掉。</p>
                     </article>
-                </div>
-                <nav class="dock">
+                </div>                <nav class="dock">
                     <button type="button" data-open="archive"><div class="ball"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></div>档案</button>
                     <button type="button" data-open="study"><div class="ball"><svg viewBox="0 0 24 24"><path d="M3 10l9-5 9 5-9 5-9-5z"/><path d="M7 12v5c3 2 7 2 10 0v-5"/></svg></div>学业</button>
                     <button type="button" data-open="works"><div class="ball"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5h8v2"/></svg></div>项目</button>
@@ -1268,11 +1293,10 @@ html.phone-land .turn-land { display: none !important; }
                     <div class="kicker">SANCTUM · 圣地</div>
                     <div class="ai-box">
                         <div class="holo"></div>
-                        <p>每一颗恒星，都是大人能力的化身。<br><em>点此进入探索</em></p>
+                        <p>12 颗可点恒星：证书、项目、信条与本站。<br><em>点此进入探索</em></p>
                     </div>
                     <div class="wave"></div>
-                </article>
-            </aside>
+                </article>            </aside>
         </div>
     </div>
 </div>
@@ -1641,6 +1665,10 @@ function tiles3(pairs) {
         return '<div class="tile glass"><b>' + p[0] + '</b><p>' + p[1] + '</p></div>';
     }).join("") + '</div>';
 }
+function proof(src, caption, kind) {
+    var cls = kind === "qr" ? "proof qr" : "proof";
+    return '<figure class="' + cls + '"><img src="' + src + '" alt="' + (caption || "") + '" loading="lazy"><figcaption>' + caption + '</figcaption></figure>';
+}
 
 const FOCUS_TINT = {
     sol: ["#ffe08a", "rgba(255,190,70,0.55)", "rgba(255,140,30,0.22)"],
@@ -1664,9 +1692,9 @@ const LAYOUTS = [
 const TREE = {
 archive: { en: "Dossier", cn: "档案", star: "sol", html:
     blk("Overview", "魏凯是谁", [
-        "魏凯，就读于广东工业大学管理学院会计学专业。他不是只学一门课的人，而是按固定顺序搭能力：先会计看懂生意，再考精算给风险标价，再用 AI 把想法做成能玩、能用的成品。三件事都已经有落地的印：初级会计、准精算 102 经济金融综合、实训营二等奖与四国争霸体验版。",
-        "打开这座档案星域，你会看到四颗恒星。点任意一颗，那颗星会放大，里面是对应的完整说明。",
-        tiles([["学校", "广东工业大学 · 会计学"], ["路径", "会计 → 精算 → AI应用"], ["身份", "会计学学生 / 精算考生 / AI原生开发者"], ["信条", "复利是世界第八大奇迹，深度沉淀是唯一长期捷径"]])
+        "会计学出身、精算学习、AI 原生开发。工作流只有四个字：判断 + 验收。已经交付过联机战争策略游戏、获奖的多智能体选股系统，以及这座 3D 交互终端。",
+        "擅长的事只有一件：把一个想法迭代一百轮，推到能交付。这不是口号——点开项目舱与资质舱，证书原件与体验版二维码都在。",
+        tiles([["学校", "广东工业大学 · 会计学 · 2028 届"], ["路径", "会计 → 精算 → AI 原生开发"], ["身份", "会计学学生 / 精算考生 / AI原生开发者"], ["信条", "复利是世界第八大奇迹，深度沉淀是唯一长期捷径"]])
     ]),
     kids: [
         { en: "Position", cn: "核心定位", star: "blue", teaser: "财会落地 × 精算数理 × AI交付，三层往上盖。", html:
@@ -1804,7 +1832,8 @@ study: { en: "Study", cn: "学业", star: "blue", html:
             ]),
             kids: [
                 { en: "Camp", cn: "实训营", star: "gold", teaser: "公开50席 · 二等奖 · 蚂蚁参访。", html: blk("Camp", "上海财经大学AI金融研学实训营", [
-                    "2026 年 7 月，上海财经大学举办的全国大学生 AI 金融研学实训营。全国仅 200 席，150 席给数智新财经联盟高校，面向普通大学生的公开通道只有 50 席。魏凯走的是这 50 席，不是联盟预留席。8 天 7 晚，高强度把股票/期货 AI 量化、机器学习与金融大模型压进同一段日程，参访蚂蚁集团，以项目答辩收口。",
+                    "2026 年 7 月，上海财经大学举办的全国大学生 AI 金融研学实训营。全国仅 200 席，150 席给数智新财经联盟高校，面向普通大学生的公开通道只有 50 席。魏凯走的是这 50 席。8 天 7 晚，高强度把股票/期货 AI 量化、机器学习与金融大模型压进同一段日程，参访蚂蚁集团，以项目答辩收口。",
+                    proof("assets/certs/camp-certificate.jpg", "结营证书原件 · 2026.07.26 · 证书编号 2026-141"),
                     lis(["入口：公开 50 席竞争，不把名额说成「全国高校普惠」。", "内容：股票 / 期货 AI 量化、机器学习、金融大模型。", "现场：蚂蚁集团参访，看产业侧怎么把模型接到业务。", "出口：团队项目《多智能体基本面可解释股票筛选》获二等奖，方法带回项目库。"]),
                     tiles([["名额", "全国 200 / 公开 50"], ["时长", "8 天 7 晚"], ["主题", "AI 量化 · 机器学习 · 金融大模型"], ["出口", "答辩 · 团队项目二等奖"]]),
                     "实训营证明的是执行力：能在压缩时间里交货、能在答辩里把方法讲圆。它不是全部人设。初级会计、准精算 102、四国争霸与这座终端，必须同时在册。"
@@ -1846,6 +1875,7 @@ works: { en: "Works", cn: "项目", star: "gold", html:
             blk("Game", "四国争霸 · 微信小游戏", [
                 "一款单机+联机的多势力战争策略游戏，微信小游戏体验版。玩家操控势力，通过城池经营、募兵、海陆作战、外交博弈，消灭敌方全部君主完成统一。",
                 "已实现：多套主题地图、新手引导、多难度 AI、房间联机。开发方式：AI 协作开发，魏凯负责玩法设计、系统拆解、验收与迭代。",
+                proof("assets/certs/guozhengba-qr.png", "微信扫码 · 四国争霸体验版", "qr"),
                 "点伴星看系统拆解与开发方式。"
             ]),
             kids: [
@@ -1876,23 +1906,26 @@ works: { en: "Works", cn: "项目", star: "gold", html:
 },
 seals: { en: "Seals", cn: "资质", star: "white", html:
     blk("Seals", "资质印记说明", [
-        "证书是路标，不是终点。每一枚对应一段已经能独立完成的能力。点恒星看它钉住了什么。"
+        "证书是路标，不是终点。下面三枚附原件扫描：初级会计、准精算 102 成绩单、实训营结营证书。点恒星看它钉住了什么。"
     ]),
     kids: [
         { en: "CPA Junior", cn: "初级会计", star: "gold", teaser: "2025.05 · 账务与报表底座。", html: blk("2025.05", "初级会计专业技术资格", [
             "2025 年 5 月取得初级会计专业技术资格。这枚印确认的是：账务、报表与财务分析的基本功可独立完成。它不是装饰，是后面精算与 AI 项目能站得住的地面。",
+            proof("assets/certs/junior-accounting.jpg", "初级会计专业技术资格证书 · 2025.05.20"),
             lis(["钉住：确认、计量、记录、报告的纪律。", "对内：为四维分析、杜邦、风险距离提供科目基础。", "接到：实训营项目的财务字段理解、五金厂实习的账实核对。", "位置：时间线上的第一枚正式路标，不是终点。"]),
             tiles([["时间", "2025.05"], ["含义", "财会底座被正式称重"], ["接到", "项目里的财务理解"], ["不接到", "用证书代替判断"]]),
             "魏凯把初级会计写成地面，不写成天花板。地面的作用是让人敢往上盖。"
         ]) },
         { en: "SOA 102", cn: "准精算 102", star: "blue", teaser: "2025.10 · 经济金融综合。", html: blk("2025.10", "准精算师 102 经济金融综合", [
             "2025 年 10 月通过中国精算师资格考试准精算师阶段 102《经济金融综合》。它钉住的是经济金融语境：市场、利率、机构、政策如何进入定价讨论。精算数学仍在备考，102 不是「已经是精算师」，是定价语言的第一枚正式印。",
+            proof("assets/certs/actuary-102.jpg", "精算师职业资格考试成绩单 · 102 通过 · 2025.10.26"),
             lis(["与初级会计分工：一个钉底座，一个钉定价语境。", "纪律：不把单科通过写成全部资格。"]),
             tiles([["时间", "2025.10"], ["考试", "中国精算师资格考试（准精算师阶段）"], ["状态", "语境落地，精算数学推进中"], ["接到", "项目里的风险意识与尾部纪律"]]),
             "魏凯用 102 证明自己能进入精算的话语场。进入之后，要用精算数学把话语变成工具。"
         ]) },
         { en: "Camp", cn: "实训营二等奖", star: "orange", teaser: "公开50席 · 结营答辩二等奖。", html: blk("2026.07", "实训营二等奖", [
             "2026 年 7 月，上海财经大学 AI 金融研学实训营（全国 200 席，公开通道 50 席，走公开通道）。团队项目《多智能体基本面可解释股票筛选》在结营答辩中获二等奖。魏凯负责多智能体流水线、评分与证据链的代码实现。",
+            proof("assets/certs/camp-certificate.jpg", "结营证书 · 数智新财经高校联盟 / 上海财经大学 · 2026-141 号"),
             "证明的是：在高强度现场，能把方法做成能答辩、能复算的成品。",
             tiles([["名额", "全国 200 / 公开 50"], ["出口", "结营答辩 · 团队项目二等奖"], ["职责", "多智能体流水线 · 评分与证据链实现"], ["位置", "执行力印记，不是全部人设"]]),
             "印记的价值是并列。单独放大任何一枚，会看窄魏凯；把它们放在同一册上，才看得完整。"
